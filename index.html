@@ -3,40 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#0a0b0e">
+<meta name="theme-color" content="#0a6ed1">
 <title>JSON·XML Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
   :root {
-    --bg: #0a0b0e;
-    --surface: #111318;
-    --surface2: #181c24;
-    --border: #232839;
-    --accent: #4f8ef7;
-    --accent2: #a78bfa;
-    --accent3: #34d399;
-    --accent4: #f59e0b;
-    --accent5: #f87171;
-    --text: #e2e8f0;
-    --text2: #94a3b8;
-    --text3: #475569;
-    --glow: rgba(79,142,247,0.15);
+    --bg: #f3f6fb;
+    --surface: #ffffff;
+    --surface2: #edf2f8;
+    --border: #d5dee8;
+    --accent: #0a6ed1;
+    --accent2: #0854a0;
+    --accent3: #107e3e;
+    --accent4: #b26a00;
+    --accent5: #bb0000;
+    --text: #1d2d3f;
+    --text2: #425466;
+    --text3: #6a7f94;
+    --glow: rgba(10,110,209,0.16);
+    --shellbar: #0a6ed1;
+    --shellbar-text: #f4f8fc;
     --mono: 'JetBrains Mono', monospace;
-    --sans: 'Syne', sans-serif;
+    --sans: 'Source Sans 3', 'Segoe UI', sans-serif;
+  }
+
+  body[data-theme="dark"] {
+    --bg: #12171d;
+    --surface: #1b232d;
+    --surface2: #25303c;
+    --border: #334457;
+    --accent: #74b8ff;
+    --accent2: #9fd0ff;
+    --accent3: #32b76a;
+    --accent4: #ffb65a;
+    --accent5: #ff8c8c;
+    --text: #e3edf7;
+    --text2: #a9bdd2;
+    --text3: #7d93ab;
+    --glow: rgba(116,184,255,0.18);
+    --shellbar: #2a3a4d;
+    --shellbar-text: #edf4fb;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: var(--sans);
-    background: var(--bg);
+    background: linear-gradient(165deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 85%, #d7e6f6 15%) 100%);
     color: var(--text);
     height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  .topbar,
+  .pane-header,
+  .tree-pane,
+  .stats-panel,
+  textarea.code-editor,
+  .output-area,
+  .path-row,
+  .status-bar,
+  .btn,
+  .tab-btn,
+  select.sel,
+  .json-path {
+    transition: background-color 0.22s ease, border-color 0.22s ease, color 0.22s ease, box-shadow 0.22s ease;
   }
 
   /* ── TOP BAR ── */
@@ -46,27 +82,39 @@
     gap: 0;
     padding: 0 20px;
     height: 52px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
+    background: linear-gradient(90deg, var(--shellbar) 0%, color-mix(in srgb, var(--shellbar) 92%, #ffffff 8%) 100%);
+    border-bottom: 1px solid color-mix(in srgb, var(--shellbar) 65%, #000000 35%);
     flex-shrink: 0;
     position: relative;
     z-index: 100;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--shellbar) 30%, transparent 70%);
+  }
+
+  .topbar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 1px;
+    background: rgba(255,255,255,0.18);
+    pointer-events: none;
   }
 
   .logo {
-    font-size: 17px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
     margin-right: 28px;
     white-space: nowrap;
   }
-  .logo span:first-child { color: var(--accent); }
-  .logo span:last-child { color: var(--accent2); }
-  .logo i { color: var(--text3); font-style: normal; }
+  .logo span:first-child { color: var(--shellbar-text); }
+  .logo span:last-child { color: #cce7ff; }
+  .logo i { color: rgba(255,255,255,0.64); font-style: normal; }
 
   .tabs {
     display: flex;
-    gap: 2px;
+    gap: 4px;
     flex: 1;
     overflow-x: auto;
   }
@@ -76,27 +124,28 @@
     display: flex;
     align-items: center;
     gap: 7px;
-    padding: 8px 16px;
+    padding: 9px 14px;
     border: none;
     background: transparent;
     color: var(--text3);
     font-family: var(--sans);
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    border-radius: 8px 8px 0 0;
+    border-radius: 4px 4px 0 0;
     border-bottom: 2px solid transparent;
     white-space: nowrap;
     transition: all 0.18s;
-    letter-spacing: 0.3px;
+    letter-spacing: 0.15px;
   }
-  .tab-btn:hover { color: var(--text2); background: rgba(255,255,255,0.04); }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(79,142,247,0.07); }
+  .tab-btn { color: rgba(255,255,255,0.78); }
+  .tab-btn:hover { color: #ffffff; background: rgba(255,255,255,0.14); }
+  .tab-btn.active { color: #ffffff; border-bottom-color: #ffffff; background: rgba(255,255,255,0.22); }
   .tab-btn .icon { font-size: 14px; }
 
   .topbar-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     margin-left: 16px;
   }
 
@@ -104,15 +153,15 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 14px;
+    padding: 8px 12px;
     border: 1px solid var(--border);
     background: var(--surface2);
     color: var(--text2);
     font-family: var(--sans);
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
-    border-radius: 7px;
+    border-radius: 4px;
     transition: all 0.18s;
     letter-spacing: 0.3px;
   }
@@ -121,6 +170,26 @@
   .btn.primary:hover { background: #3a7ce0; }
   .btn.success { background: var(--accent3); border-color: var(--accent3); color: #fff; }
   .btn.danger { background: var(--accent5); border-color: var(--accent5); color: #fff; }
+
+  .topbar .btn {
+    border-color: rgba(255,255,255,0.32);
+    background: rgba(255,255,255,0.08);
+    color: var(--shellbar-text);
+  }
+  .topbar .btn:hover {
+    border-color: rgba(255,255,255,0.62);
+    color: #ffffff;
+    background: rgba(255,255,255,0.2);
+  }
+  .topbar .btn.primary {
+    background: #ffffff;
+    color: var(--accent2);
+    border-color: #ffffff;
+  }
+  .topbar .btn.primary:hover {
+    background: #eaf4ff;
+    color: var(--accent2);
+  }
 
   /* ── MAIN LAYOUT ── */
   .main {
@@ -137,6 +206,15 @@
     flex-direction: column;
   }
   .panel.active { display: flex; }
+
+  .panel.active {
+    animation: panelIn 0.2s ease;
+  }
+
+  @keyframes panelIn {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: none; }
+  }
 
   /* ── EDITOR PANEL ── */
   .editor-layout {
@@ -159,15 +237,15 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 16px;
+    padding: 11px 16px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
   }
   .pane-title {
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
+    font-weight: 600;
+    letter-spacing: 0.9px;
     text-transform: uppercase;
     color: var(--text3);
     display: flex;
@@ -194,11 +272,11 @@
     color: var(--text);
     font-family: var(--mono);
     font-size: 13px;
-    line-height: 1.7;
+    line-height: 1.62;
     border: none;
     resize: none;
     outline: none;
-    padding: 16px 20px;
+    padding: 14px 18px;
     tab-size: 2;
     caret-color: var(--accent);
   }
@@ -206,10 +284,10 @@
   .output-area {
     flex: 1;
     overflow: auto;
-    padding: 16px 20px;
+    padding: 14px 18px;
     font-family: var(--mono);
     font-size: 13px;
-    line-height: 1.7;
+    line-height: 1.62;
     background: var(--bg);
     white-space: pre;
     color: var(--text);
@@ -651,7 +729,7 @@
   }
 
   .tree-pane {
-    width: 320px;
+    width: 300px;
     flex-shrink: 0;
     overflow-y: auto;
     border-right: 1px solid var(--border);
@@ -682,7 +760,7 @@
   .tree-children.collapsed { display: none; }
 
   .stats-panel {
-    width: 200px;
+    width: 220px;
     flex-shrink: 0;
     border-left: 1px solid var(--border);
     background: var(--surface);
@@ -713,7 +791,7 @@
   }
   .toast {
     padding: 12px 18px;
-    border-radius: 10px;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     animation: toastIn 0.3s ease;
@@ -756,7 +834,7 @@
     font-size: 11px;
     color: var(--accent2);
     padding: 6px 12px;
-    background: rgba(167,139,250,0.07);
+    background: color-mix(in srgb, var(--accent) 9%, transparent 91%);
     border-top: 1px solid var(--border);
     flex-shrink: 0;
     min-height: 28px;
@@ -817,7 +895,7 @@
     font-size: 12px;
     font-weight: 600;
     padding: 5px 10px;
-    border-radius: 6px;
+    border-radius: 4px;
     outline: none;
     cursor: pointer;
   }
@@ -838,6 +916,28 @@
   .empty-state .big-icon { font-size: 48px; margin-bottom: 8px; }
   .empty-state h3 { font-size: 18px; color: var(--text2); }
   .empty-state p { font-size: 13px; max-width: 280px; line-height: 1.6; }
+
+  @media (max-width: 1100px) {
+    .topbar {
+      height: auto;
+      min-height: 52px;
+      padding: 8px 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .logo { margin-right: 10px; }
+    .tabs { order: 3; width: 100%; }
+    .topbar-actions { margin-left: auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -847,27 +947,28 @@
   <div class="logo"><span>JSON</span><i>·</i><span>XML</span> Studio</div>
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('viewer')" id="tab-viewer">
-      <span class="icon">🔍</span> Viewer
+      <span class="icon">◈</span> Viewer
     </button>
     <button class="tab-btn" onclick="switchTab('editor')" id="tab-editor">
-      <span class="icon">✏️</span> Editor
+      <span class="icon">▤</span> Editor
     </button>
     <button class="tab-btn" onclick="switchTab('convert')" id="tab-convert">
-      <span class="icon">🔄</span> Convert
+      <span class="icon">⇄</span> Convert
     </button>
     <button class="tab-btn" onclick="switchTab('classgen')" id="tab-classgen">
-      <span class="icon">🏗️</span> Class Generator
+      <span class="icon">▧</span> Class Generator
     </button>
     <button class="tab-btn" onclick="switchTab('diagram')" id="tab-diagram">
-      <span class="icon">📊</span> Diagram
+      <span class="icon">▦</span> Diagram
     </button>
     <button class="tab-btn" onclick="switchTab('compare')" id="tab-compare">
-      <span class="icon">⚖️</span> Compare
+      <span class="icon">≋</span> Compare
     </button>
   </div>
   <div class="topbar-actions">
-    <button class="btn" onclick="openFilePicker()">📂 Open File</button>
-    <button class="btn primary" onclick="downloadOutput()">💾 Export</button>
+    <button class="btn" id="theme-toggle-btn" onclick="toggleTheme()">Modo Escuro</button>
+    <button class="btn" onclick="openFilePicker()">Abrir Arquivo</button>
+    <button class="btn primary" onclick="downloadOutput()">Exportar</button>
   </div>
 </div>
 
@@ -1251,6 +1352,29 @@ let globalData = null;
 let globalFormat = 'json';
 let viewerRenderTimer = null;
 const VIEWER_RENDER_DELAY_MS = 140;
+const THEME_STORAGE_KEY = 'jsonxml-theme';
+
+function updateThemeButton(theme) {
+  const btn = document.getElementById('theme-toggle-btn');
+  if (!btn) return;
+  btn.textContent = theme === 'dark' ? 'Modo Claro' : 'Modo Escuro';
+}
+
+function setTheme(theme) {
+  const normalized = theme === 'dark' ? 'dark' : 'light';
+  document.body.setAttribute('data-theme', normalized);
+  localStorage.setItem(THEME_STORAGE_KEY, normalized);
+  updateThemeButton(normalized);
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) {
+    themeMeta.setAttribute('content', normalized === 'dark' ? '#2a3a4d' : '#0a6ed1');
+  }
+}
+
+function toggleTheme() {
+  const current = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  setTheme(current === 'dark' ? 'light' : 'dark');
+}
 
 function scheduleViewerRender() {
   clearTimeout(viewerRenderTimer);
@@ -2715,6 +2839,10 @@ function toast(msg, type = 'info') {
 
 // Load sample on start
 window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+
   const sample = `{
   "project": "JSON·XML Studio",
   "version": "1.0.0",
