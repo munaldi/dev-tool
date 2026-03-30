@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "serve": "firebase emulators:start --only hosting",
-    "deploy": "firebase deploy --only hosting"
+    "deploy": "firebase deploy --only hosting",
+    "audit": "npm audit --audit-level=high"
   },
   "devDependencies": {
     "firebase-tools": "^13.35.1"

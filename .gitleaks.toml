@@ -1,0 +1,11 @@
+title = "dev-tool gitleaks config"
+
+[allowlist]
+description = "Allow non-secret token variable names used in UI/parser code"
+regexes = [
+  '''\btokens?\b'''
+]
+paths = [
+  '''index\.html''',
+  '''package-lock\.json'''
+]
