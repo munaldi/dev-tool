@@ -1,0 +1,11 @@
+{
+  "name": "dev-tool",
+  "private": true,
+  "scripts": {
+    "serve": "firebase emulators:start --only hosting",
+    "deploy": "firebase deploy --only hosting"
+  },
+  "devDependencies": {
+    "firebase-tools": "^13.35.1"
+  }
+}

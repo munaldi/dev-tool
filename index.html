@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0b0e">
+<title>JSON·XML Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;600;700;800&display=swap">
+<style>
+  :root {
+    --bg: #0a0b0e;
+    --surface: #111318;
+    --surface2: #181c24;
+    --border: #232839;
+    --accent: #4f8ef7;
+    --accent2: #a78bfa;
+    --accent3: #34d399;
+    --accent4: #f59e0b;
+    --accent5: #f87171;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --glow: rgba(79,142,247,0.15);
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 20px;
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-right: 28px;
+    white-space: nowrap;
+  }
+  .logo span:first-child { color: var(--accent); }
+  .logo span:last-child { color: var(--accent2); }
+  .logo i { color: var(--text3); font-style: normal; }
+
+  .tabs {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+    overflow-x: auto;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text3);
+    font-family: var(--sans);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.18s;
+    letter-spacing: 0.3px;
+  }
+  .tab-btn:hover { color: var(--text2); background: rgba(255,255,255,0.04); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(79,142,247,0.07); }
+  .tab-btn .icon { font-size: 14px; }
+
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 16px;
+  }
+
+  .btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 7px;
+    transition: all 0.18s;
+    letter-spacing: 0.3px;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.08); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: #3a7ce0; }
+  .btn.success { background: var(--accent3); border-color: var(--accent3); color: #fff; }
+  .btn.danger { background: var(--accent5); border-color: var(--accent5); color: #fff; }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── PANELS ── */
+  .panel {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+    flex-direction: column;
+  }
+  .panel.active { display: flex; }
+
+  /* ── EDITOR PANEL ── */
+  .editor-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+  }
+
+  .editor-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .editor-pane:last-child { border-right: none; }
+
+  .pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .pane-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pane-title .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .pane-actions { display: flex; gap: 6px; }
+
+  .editor-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  textarea.code-editor {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    border: none;
+    resize: none;
+    outline: none;
+    padding: 16px 20px;
+    tab-size: 2;
+    caret-color: var(--accent);
+  }
+
+  .output-area {
+    flex: 1;
+    overflow: auto;
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    background: var(--bg);
+    white-space: pre;
+    color: var(--text);
+  }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 6px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    flex-shrink: 0;
+  }
+  .status-ok { color: var(--accent3); }
+  .status-err { color: var(--accent5); }
+
+  /* ── CONVERT PANEL ── */
+  .convert-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .convert-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+  }
+
+  .convert-section-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 12px 16px 6px;
+  }
+
+  .convert-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    font-size: 13px;
+    color: var(--text2);
+    font-weight: 600;
+  }
+  .convert-option:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .convert-option.active { border-left-color: var(--accent); color: var(--accent); background: rgba(79,142,247,0.06); }
+  .convert-option .icon { font-size: 16px; min-width: 20px; text-align: center; }
+  .convert-arrow { font-size: 10px; color: var(--text3); margin: 0 2px; }
+
+  .convert-main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── CLASS GEN PANEL ── */
+  .classgen-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .lang-sidebar {
+    width: 180px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+  }
+
+  .lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    text-align: left;
+  }
+  .lang-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .lang-btn.active { color: var(--accent2); border-left-color: var(--accent2); background: rgba(167,139,250,0.07); }
+  .lang-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── COMPARE PANEL (full text diff) ── */
+  .compare-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* toolbar row */
+  .diff-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  .diff-toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .diff-toolbar-sep {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  .diff-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 11px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .diff-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .diff-nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .diff-stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--mono);
+  }
+  .pill-add { background: rgba(52,211,153,0.15); color: var(--accent3); border: 1px solid rgba(52,211,153,0.3); }
+  .pill-rem { background: rgba(248,113,113,0.15); color: var(--accent5); border: 1px solid rgba(248,113,113,0.3); }
+  .pill-chg { background: rgba(245,158,11,0.15); color: var(--accent4); border: 1px solid rgba(245,158,11,0.3); }
+  .pill-same { background: rgba(148,163,184,0.1); color: var(--text3); border: 1px solid var(--border); }
+
+  .diff-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text2);
+    cursor: pointer;
+    user-select: none;
+  }
+  .diff-toggle input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
+
+  /* two-pane diff area */
+  .diff-panes-wrap {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  .diff-pane-headers {
+    display: flex;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .diff-pane-header {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 9px 16px;
+    gap: 10px;
+    border-right: 1px solid var(--border);
+  }
+  .diff-pane-header:last-child { border-right: none; }
+  .diff-pane-header-left { display: flex; align-items: center; gap: 8px; }
+
+  .diff-pane-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .diff-file-badge {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text2);
+    font-weight: 400;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* scrollable diff body */
+  .diff-body {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .diff-side {
+    flex: 1;
+    overflow: auto;
+    border-right: 1px solid var(--border);
+    position: relative;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+  }
+  .diff-side:last-child { border-right: none; }
+
+  /* gutter: line numbers */
+  .diff-gutter {
+    display: inline-block;
+    min-width: 48px;
+    padding: 0 10px 0 6px;
+    color: var(--text3);
+    font-size: 11px;
+    text-align: right;
+    user-select: none;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .diff-row {
+    display: flex;
+    min-height: 21.5px;
+    align-items: stretch;
+  }
+
+  .diff-row-content {
+    flex: 1;
+    padding: 0 12px;
+    white-space: pre;
+    overflow: hidden;
+    min-height: 21.5px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* row type colours */
+  .diff-row.row-added    { background: rgba(52,211,153,0.10); }
+  .diff-row.row-removed  { background: rgba(248,113,113,0.10); }
+  .diff-row.row-changed  { background: rgba(245,158,11,0.07); }
+  .diff-row.row-gap      { background: rgba(79,142,247,0.05); }
+  .diff-row.row-same     { background: transparent; }
+
+  .diff-row.row-added   .diff-gutter { background: rgba(52,211,153,0.12); color: var(--accent3); border-right-color: rgba(52,211,153,0.2); }
+  .diff-row.row-removed .diff-gutter { background: rgba(248,113,113,0.12); color: var(--accent5); border-right-color: rgba(248,113,113,0.2); }
+  .diff-row.row-changed .diff-gutter { background: rgba(245,158,11,0.10); color: var(--accent4); border-right-color: rgba(245,158,11,0.2); }
+  .diff-row.row-gap     .diff-gutter { background: rgba(79,142,247,0.08); color: var(--accent); }
+
+  /* inline char highlight */
+  .hl-add-char  { background: rgba(52,211,153,0.35); border-radius: 2px; }
+  .hl-rem-char  { background: rgba(248,113,113,0.35); border-radius: 2px; text-decoration: line-through; }
+
+  .diff-row.row-added    .diff-row-content { color: var(--accent3); }
+  .diff-row.row-removed  .diff-row-content { color: var(--accent5); }
+  .diff-row.row-changed  .diff-row-content { color: var(--accent4); }
+  .diff-row.row-gap      .diff-row-content { color: var(--accent); font-style: italic; font-size: 11px; }
+  .diff-row.row-same     .diff-row-content { color: var(--text2); }
+
+  /* sign in gutter for changed/added/removed */
+  .diff-sign {
+    display: inline-block;
+    width: 14px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* drag target overlay */
+  .drop-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(79,142,247,0.10);
+    border: 2px dashed var(--accent);
+    border-radius: 6px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--accent);
+    z-index: 10;
+    pointer-events: none;
+  }
+  .drag-active .drop-overlay { display: flex; }
+
+  /* input area (hidden textarea for capture) */
+  .diff-input-wrap {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+  }
+  .diff-input-wrap:last-child { border-right: none; }
+
+  .diff-input-textarea {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    resize: none;
+    cursor: default;
+    z-index: 5;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0;
+    overflow: auto;
+  }
+
+  /* ── Compare status bar ── */
+  .diff-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 5px 16px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    flex-shrink: 0;
+  }
+  .diff-status-item { display: flex; align-items: center; gap: 5px; }
+
+  /* sum badges kept for backward compat */
+  .sum-badge { padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 11px; }
+  .badge-add { background: rgba(52,211,153,0.2); color: var(--accent3); }
+  .badge-rem { background: rgba(248,113,113,0.2); color: var(--accent5); }
+  .badge-chg { background: rgba(245,158,11,0.2); color: var(--accent4); }
+
+  /* ── DIAGRAM PANEL ── */
+  .diagram-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .diagram-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .diagram-type-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    text-align: left;
+    transition: all 0.15s;
+    width: 100%;
+  }
+  .diagram-type-btn:hover { background: rgba(255,255,255,0.03); color: var(--text); }
+  .diagram-type-btn.active { color: var(--accent4); border-left-color: var(--accent4); background: rgba(245,158,11,0.06); }
+
+  .diagram-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .canvas-area {
+    flex: 1;
+    overflow: auto;
+    background: var(--bg);
+    position: relative;
+  }
+
+  #diagram-canvas {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* ── VIEWER PANEL ── */
+  .viewer-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .tree-pane {
+    width: 320px;
+    flex-shrink: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    padding: 12px 0;
+  }
+
+  .tree-node {
+    display: flex;
+    align-items: flex-start;
+    padding: 3px 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-size: 12.5px;
+    font-family: var(--mono);
+  }
+  .tree-node:hover { background: rgba(255,255,255,0.03); }
+  .tree-toggle { width: 16px; flex-shrink: 0; color: var(--text3); user-select: none; font-size: 10px; padding-top: 2px; }
+  .tree-key { color: var(--accent); font-weight: 500; }
+  .tree-colon { color: var(--text3); margin: 0 3px; }
+  .tree-type-string { color: var(--accent3); }
+  .tree-type-number { color: var(--accent4); }
+  .tree-type-boolean { color: var(--accent2); }
+  .tree-type-null { color: var(--text3); font-style: italic; }
+  .tree-type-object { color: var(--text2); }
+  .tree-type-array { color: var(--accent5); }
+  .tree-children { display: block; }
+  .tree-children.collapsed { display: none; }
+
+  .stats-panel {
+    width: 200px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  .stat-group { margin-bottom: 20px; }
+  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+  .stat-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .stat-name { font-size: 12px; color: var(--text2); }
+  .stat-val { font-family: var(--mono); font-size: 14px; font-weight: 700; }
+  .val-blue { color: var(--accent); }
+  .val-purple { color: var(--accent2); }
+  .val-green { color: var(--accent3); }
+  .val-orange { color: var(--accent4); }
+  .val-red { color: var(--accent5); }
+
+  /* ── NOTIFICATIONS ── */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+  }
+  .toast {
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    animation: toastIn 0.3s ease;
+    max-width: 320px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast-ok { background: rgba(52,211,153,0.15); border: 1px solid rgba(52,211,153,0.4); color: var(--accent3); }
+  .toast-err { background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.4); color: var(--accent5); }
+  .toast-info { background: rgba(79,142,247,0.15); border: 1px solid rgba(79,142,247,0.4); color: var(--accent); }
+  @keyframes toastIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: none; } }
+
+  /* ── DRAG & DROP ── */
+  .drop-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    height: 100%;
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    margin: 16px;
+    transition: all 0.2s;
+    cursor: pointer;
+    color: var(--text3);
+    text-align: center;
+    background: transparent;
+  }
+  .drop-zone.drag-over { border-color: var(--accent); background: rgba(79,142,247,0.05); color: var(--accent); }
+  .drop-zone .drop-icon { font-size: 40px; }
+  .drop-zone p { font-size: 14px; font-weight: 600; }
+  .drop-zone small { font-size: 12px; }
+
+  /* ── PATH DISPLAY ── */
+  .json-path {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent2);
+    padding: 6px 12px;
+    background: rgba(167,139,250,0.07);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    min-height: 28px;
+  }
+
+  /* ── SCROLLBARS ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+  /* ── HIGHLIGHT ── */
+  .hl-string { color: #a3e635; }
+  .hl-number { color: #fb923c; }
+  .hl-bool { color: #c084fc; }
+  .hl-null { color: #64748b; font-style: italic; }
+  .hl-key { color: #60a5fa; }
+  .hl-punct { color: #94a3b8; }
+  .hl-tag { color: #f472b6; }
+  .hl-attr { color: #fbbf24; }
+  .hl-attrval { color: #a3e635; }
+  .hl-comment { color: #475569; font-style: italic; }
+
+  pre { white-space: pre; font-family: var(--mono); font-size: 13px; line-height: 1.7; }
+
+  .output-area pre { margin: 0; }
+
+  /* ── PATH BAR ── */
+  .path-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .path-label { font-size: 11px; color: var(--text3); font-weight: 600; letter-spacing: 0.5px; }
+  .path-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+  }
+  .path-input:focus { border-color: var(--accent); }
+
+  /* Format select */
+  select.sel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+  }
+  select.sel:focus { border-color: var(--accent); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: var(--text3);
+    text-align: center;
+    padding: 40px;
+  }
+  .empty-state .big-icon { font-size: 48px; margin-bottom: 8px; }
+  .empty-state h3 { font-size: 18px; color: var(--text2); }
+  .empty-state p { font-size: 13px; max-width: 280px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo"><span>JSON</span><i>·</i><span>XML</span> Studio</div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('viewer')" id="tab-viewer">
+      <span class="icon">🔍</span> Viewer
+    </button>
+    <button class="tab-btn" onclick="switchTab('editor')" id="tab-editor">
+      <span class="icon">✏️</span> Editor
+    </button>
+    <button class="tab-btn" onclick="switchTab('convert')" id="tab-convert">
+      <span class="icon">🔄</span> Convert
+    </button>
+    <button class="tab-btn" onclick="switchTab('classgen')" id="tab-classgen">
+      <span class="icon">🏗️</span> Class Generator
+    </button>
+    <button class="tab-btn" onclick="switchTab('diagram')" id="tab-diagram">
+      <span class="icon">📊</span> Diagram
+    </button>
+    <button class="tab-btn" onclick="switchTab('compare')" id="tab-compare">
+      <span class="icon">⚖️</span> Compare
+    </button>
+  </div>
+  <div class="topbar-actions">
+    <button class="btn" onclick="openFilePicker()">📂 Open File</button>
+    <button class="btn primary" onclick="downloadOutput()">💾 Export</button>
+  </div>
+</div>
+
+<!-- HIDDEN FILE INPUT -->
+<input type="file" id="file-input" accept=".json,.xml,.txt" style="display:none" onchange="loadFile(event)">
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ═══════════════════════════════════ VIEWER PANEL ═══ -->
+  <div class="panel active" id="panel-viewer">
+    <div class="viewer-layout">
+      <!-- Left: input + tree -->
+      <div class="tree-pane" id="tree-pane">
+        <div style="padding:12px 16px">
+          <div class="empty-state" id="tree-empty">
+            <div class="big-icon">🌲</div>
+            <h3>No data loaded</h3>
+            <p>Load a file or paste JSON/XML in the Editor tab, then come back here.</p>
+          </div>
+          <div id="tree-root" style="display:none"></div>
+        </div>
+      </div>
+      <!-- Center: highlighted source -->
+      <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+        <div class="pane-header">
+          <span class="pane-title"><span class="dot"></span> Source</span>
+          <div class="pane-actions">
+            <select class="sel" id="viewer-format" onchange="renderViewer()">
+              <option value="auto">Auto-detect</option>
+              <option value="json">JSON</option>
+              <option value="xml">XML</option>
+            </select>
+            <button class="btn" onclick="beautifyViewer()">✨ Beautify</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="viewer-input" placeholder="Paste JSON or XML here, or drag & drop a file..." oninput="scheduleViewerRender()" ondragover="event.preventDefault()" ondrop="handleDrop(event,'viewer-input')"></textarea>
+        <div class="json-path" id="viewer-path">$</div>
+      </div>
+      <!-- Right: stats -->
+      <div class="stats-panel" id="stats-panel">
+        <div class="stat-group">
+          <div class="stat-label">Structure</div>
+          <div class="stat-item"><span class="stat-name">Keys</span><span class="stat-val val-blue" id="stat-keys">—</span></div>
+          <div class="stat-item"><span class="stat-name">Objects</span><span class="stat-val val-purple" id="stat-objects">—</span></div>
+          <div class="stat-item"><span class="stat-name">Arrays</span><span class="stat-val val-orange" id="stat-arrays">—</span></div>
+          <div class="stat-item"><span class="stat-name">Strings</span><span class="stat-val val-green" id="stat-strings">—</span></div>
+          <div class="stat-item"><span class="stat-name">Numbers</span><span class="stat-val val-orange" id="stat-numbers">—</span></div>
+          <div class="stat-item"><span class="stat-name">Booleans</span><span class="stat-val val-purple" id="stat-bools">—</span></div>
+          <div class="stat-item"><span class="stat-name">Nulls</span><span class="stat-val val-red" id="stat-nulls">—</span></div>
+        </div>
+        <div class="stat-group">
+          <div class="stat-label">Size</div>
+          <div class="stat-item"><span class="stat-name">Bytes</span><span class="stat-val val-blue" id="stat-size">—</span></div>
+          <div class="stat-item"><span class="stat-name">Lines</span><span class="stat-val val-green" id="stat-lines">—</span></div>
+          <div class="stat-item"><span class="stat-name">Max Depth</span><span class="stat-val val-orange" id="stat-depth">—</span></div>
+        </div>
+        <div class="stat-group">
+          <div class="stat-label">Validity</div>
+          <div class="stat-item"><span class="stat-name">Status</span><span class="stat-val" id="stat-valid">—</span></div>
+          <div class="stat-item"><span class="stat-name">Format</span><span class="stat-val val-blue" id="stat-format">—</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ EDITOR PANEL ═══ -->
+  <div class="panel" id="panel-editor">
+    <div class="editor-layout">
+      <div class="editor-pane">
+        <div class="pane-header">
+          <span class="pane-title"><span class="dot" style="background:var(--accent2)"></span> Input</span>
+          <div class="pane-actions">
+            <button class="btn" onclick="beautify('editor-input','editor-output')">✨ Format</button>
+            <button class="btn" onclick="minify('editor-input','editor-output')">📦 Minify</button>
+            <button class="btn" onclick="validate('editor-input')">✅ Validate</button>
+            <button class="btn danger" onclick="clearEditor()">🗑 Clear</button>
+          </div>
+        </div>
+        <div class="editor-area">
+          <textarea class="code-editor" id="editor-input" placeholder="Type or paste your JSON/XML here..." ondragover="event.preventDefault()" ondrop="handleDrop(event,'editor-input')"></textarea>
+        </div>
+        <div class="status-bar" id="editor-status">
+          <span>Ready</span>
+        </div>
+      </div>
+      <div class="editor-pane">
+        <div class="pane-header">
+          <span class="pane-title"><span class="dot" style="background:var(--accent3)"></span> Output</span>
+          <div class="pane-actions">
+            <button class="btn" onclick="copyOutput('editor-output')">📋 Copy</button>
+          </div>
+        </div>
+        <div class="editor-area">
+          <div class="output-area" id="editor-output">
+            <div class="empty-state" style="height:100%">
+              <div class="big-icon">⚡</div>
+              <h3>Formatted output</h3>
+              <p>Use Format, Minify, or Validate to see results here.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ CONVERT PANEL ═══ -->
+  <div class="panel" id="panel-convert">
+    <div class="convert-layout">
+      <div class="convert-sidebar">
+        <div class="convert-section-title">JSON → ...</div>
+        <div class="convert-option active" onclick="selectConvert(this,'json2xml')" data-conv="json2xml">
+          <span class="icon">📄</span> JSON <span class="convert-arrow">→</span> XML
+        </div>
+        <div class="convert-option" onclick="selectConvert(this,'json2csv')" data-conv="json2csv">
+          <span class="icon">📊</span> JSON <span class="convert-arrow">→</span> CSV
+        </div>
+        <div class="convert-option" onclick="selectConvert(this,'json2yaml')" data-conv="json2yaml">
+          <span class="icon">📝</span> JSON <span class="convert-arrow">→</span> YAML
+        </div>
+        <div class="convert-option" onclick="selectConvert(this,'json2toml')" data-conv="json2toml">
+          <span class="icon">⚙️</span> JSON <span class="convert-arrow">→</span> TOML
+        </div>
+        <div class="convert-section-title">XML → ...</div>
+        <div class="convert-option" onclick="selectConvert(this,'xml2json')" data-conv="xml2json">
+          <span class="icon">🔧</span> XML <span class="convert-arrow">→</span> JSON
+        </div>
+        <div class="convert-section-title">Other</div>
+        <div class="convert-option" onclick="selectConvert(this,'json2ts')" data-conv="json2ts">
+          <span class="icon">🔷</span> JSON <span class="convert-arrow">→</span> TypeScript
+        </div>
+        <div class="convert-option" onclick="selectConvert(this,'json2schema')" data-conv="json2schema">
+          <span class="icon">📐</span> JSON <span class="convert-arrow">→</span> JSON Schema
+        </div>
+        <div class="convert-option" onclick="selectConvert(this,'json2md')" data-conv="json2md">
+          <span class="icon">📖</span> JSON <span class="convert-arrow">→</span> Markdown
+        </div>
+      </div>
+      <div class="convert-main">
+        <div class="editor-pane">
+          <div class="pane-header">
+            <span class="pane-title"><span class="dot" style="background:var(--accent4)"></span> Input</span>
+            <div class="pane-actions">
+              <button class="btn primary" onclick="runConvert()">▶ Convert</button>
+            </div>
+          </div>
+          <textarea class="code-editor" id="convert-input" placeholder="Paste input here..." ondragover="event.preventDefault()" ondrop="handleDrop(event,'convert-input')"></textarea>
+        </div>
+        <div class="editor-pane">
+          <div class="pane-header">
+            <span class="pane-title"><span class="dot" style="background:var(--accent3)"></span> Output</span>
+            <div class="pane-actions">
+              <button class="btn" onclick="copyOutput('convert-output-raw')">📋 Copy</button>
+            </div>
+          </div>
+          <div class="output-area" id="convert-output">
+            <div class="empty-state" style="height:100%">
+              <div class="big-icon">🔄</div>
+              <h3>Select a conversion</h3>
+              <p>Choose a format on the left, paste input, and hit Convert.</p>
+            </div>
+          </div>
+          <textarea id="convert-output-raw" style="display:none"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ CLASS GEN PANEL ═══ -->
+  <div class="panel" id="panel-classgen">
+    <div class="classgen-layout">
+      <div class="lang-sidebar">
+        <div class="convert-section-title" style="padding:16px 16px 8px">Language</div>
+        <button class="lang-btn active" onclick="selectLang(this,'python')" data-lang="python">
+          <span class="lang-dot" style="background:#3b82f6"></span> Python
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'typescript')" data-lang="typescript">
+          <span class="lang-dot" style="background:#3178c6"></span> TypeScript
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'java')" data-lang="java">
+          <span class="lang-dot" style="background:#f59e0b"></span> Java
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'csharp')" data-lang="csharp">
+          <span class="lang-dot" style="background:#a78bfa"></span> C#
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'cpp')" data-lang="cpp">
+          <span class="lang-dot" style="background:#34d399"></span> C++
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'go')" data-lang="go">
+          <span class="lang-dot" style="background:#38bdf8"></span> Go
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'rust')" data-lang="rust">
+          <span class="lang-dot" style="background:#f87171"></span> Rust
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'kotlin')" data-lang="kotlin">
+          <span class="lang-dot" style="background:#c084fc"></span> Kotlin
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'swift')" data-lang="swift">
+          <span class="lang-dot" style="background:#fb923c"></span> Swift
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'php')" data-lang="php">
+          <span class="lang-dot" style="background:#818cf8"></span> PHP
+        </button>
+        <button class="lang-btn" onclick="selectLang(this,'ruby')" data-lang="ruby">
+          <span class="lang-dot" style="background:#f43f5e"></span> Ruby
+        </button>
+      </div>
+      <div class="editor-pane">
+        <div class="pane-header">
+          <span class="pane-title"><span class="dot" style="background:var(--accent2)"></span> JSON Input</span>
+          <div class="pane-actions">
+            <input type="text" id="classname-input" placeholder="Root class name (e.g. User)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:5px 10px;border-radius:6px;outline:none;width:200px">
+            <button class="btn primary" onclick="generateClasses()">⚡ Generate</button>
+          </div>
+        </div>
+        <textarea class="code-editor" id="classgen-input" placeholder='{"name":"John","age":30,"address":{"city":"NY","zip":"10001"},"tags":["admin","user"]}'></textarea>
+      </div>
+      <div class="editor-pane">
+        <div class="pane-header">
+          <span class="pane-title"><span class="dot" style="background:var(--accent3)"></span> Generated Code</span>
+          <div class="pane-actions">
+            <button class="btn" onclick="copyOutput('classgen-output-raw')">📋 Copy</button>
+            <button class="btn" onclick="downloadClassCode()">💾 Save</button>
+          </div>
+        </div>
+        <div class="output-area" id="classgen-output">
+          <div class="empty-state" style="height:100%">
+            <div class="big-icon">🏗️</div>
+            <h3>Class Generator</h3>
+            <p>Paste JSON on the left, choose a language, and generate class definitions instantly.</p>
+          </div>
+        </div>
+        <textarea id="classgen-output-raw" style="display:none"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ DIAGRAM PANEL ═══ -->
+  <div class="panel" id="panel-diagram">
+    <div class="diagram-layout">
+      <div class="diagram-sidebar">
+        <div class="convert-section-title" style="padding:16px 16px 8px">Diagram Type</div>
+        <button class="diagram-type-btn active" onclick="selectDiagram(this,'tree')" data-diag="tree">🌳 Tree View</button>
+        <button class="diagram-type-btn" onclick="selectDiagram(this,'schema')" data-diag="schema">📐 Schema Map</button>
+        <button class="diagram-type-btn" onclick="selectDiagram(this,'table')" data-diag="table">📋 Table View</button>
+        <button class="diagram-type-btn" onclick="selectDiagram(this,'mindmap')" data-diag="mindmap">🧠 Mind Map</button>
+        <div style="flex:1"></div>
+        <div style="padding:16px">
+          <button class="btn" style="width:100%;justify-content:center" onclick="downloadDiagram()">💾 Export PNG</button>
+        </div>
+      </div>
+      <div class="diagram-main">
+        <div class="pane-header">
+          <span class="pane-title"><span class="dot" style="background:var(--accent4)"></span> JSON Input</span>
+          <div class="pane-actions">
+            <button class="btn primary" onclick="renderDiagram()">▶ Render</button>
+          </div>
+        </div>
+        <div style="height:140px; flex-shrink:0; border-bottom:1px solid var(--border); overflow:hidden;">
+          <textarea class="code-editor" id="diagram-input" style="height:100%" placeholder='{"name":"Root","children":[{"name":"Child A"},{"name":"Child B","children":[{"name":"Leaf"}]}]}'></textarea>
+        </div>
+        <div class="canvas-area" id="canvas-area">
+          <div class="empty-state" id="diagram-empty">
+            <div class="big-icon">📊</div>
+            <h3>Visualize your JSON</h3>
+            <p>Paste JSON above and click Render to generate interactive diagrams.</p>
+          </div>
+          <canvas id="diagram-canvas" style="display:none"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ TEXT COMPARE PANEL ═══ -->
+  <div class="panel" id="panel-compare">
+    <div class="compare-layout">
+
+      <!-- TOOLBAR -->
+      <div class="diff-toolbar">
+        <div class="diff-toolbar-group">
+          <button class="btn primary" onclick="runTextCompare()" style="gap:6px">⚖️ Compare</button>
+          <button class="diff-nav-btn" onclick="diffNav(-1)" id="btn-prev-diff" disabled>↑ Prev</button>
+          <button class="diff-nav-btn" onclick="diffNav(1)" id="btn-next-diff" disabled>↓ Next</button>
+          <span id="diff-nav-label" style="font-size:11px;color:var(--text3);font-family:var(--mono)"></span>
+        </div>
+        <div class="diff-toolbar-sep"></div>
+        <div class="diff-toolbar-group" id="diff-pills" style="display:none">
+          <span class="diff-stat-pill pill-add" id="pill-add">+0</span>
+          <span class="diff-stat-pill pill-rem" id="pill-rem">−0</span>
+          <span class="diff-stat-pill pill-chg" id="pill-chg">~0</span>
+          <span class="diff-stat-pill pill-same" id="pill-same">= 0 same</span>
+        </div>
+        <div class="diff-toolbar-sep"></div>
+        <div class="diff-toolbar-group">
+          <label class="diff-toggle"><input type="checkbox" id="chk-whitespace" onchange="runTextCompare()"> Ignore whitespace</label>
+          <label class="diff-toggle"><input type="checkbox" id="chk-case" onchange="runTextCompare()"> Ignore case</label>
+          <label class="diff-toggle"><input type="checkbox" id="chk-inline" checked onchange="runTextCompare()"> Inline chars</label>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn" onclick="swapSides()">⇄ Swap</button>
+          <button class="btn" onclick="clearCompare()">🗑 Clear</button>
+          <button class="btn" onclick="exportDiffReport()">📄 Export Report</button>
+        </div>
+      </div>
+
+      <!-- PANE HEADERS with load controls -->
+      <div class="diff-pane-headers">
+        <div class="diff-pane-header">
+          <div class="diff-pane-header-left">
+            <span class="diff-pane-title"><span class="dot" style="background:var(--accent3);width:7px;height:7px;border-radius:50%;display:inline-block"></span> File A</span>
+            <span class="diff-file-badge" id="label-a">— not loaded —</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn" onclick="openFileForSide('a')">📂 Load</button>
+            <button class="btn" onclick="clearSide('a')">✕</button>
+          </div>
+        </div>
+        <div class="diff-pane-header">
+          <div class="diff-pane-header-left">
+            <span class="diff-pane-title"><span class="dot" style="background:var(--accent5);width:7px;height:7px;border-radius:50%;display:inline-block"></span> File B</span>
+            <span class="diff-file-badge" id="label-b">— not loaded —</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn" onclick="openFileForSide('b')">📂 Load</button>
+            <button class="btn" onclick="clearSide('b')">✕</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT TEXTAREAS + DIFF DISPLAY -->
+      <div class="diff-panes-wrap">
+        <div class="diff-body" id="diff-body">
+
+          <!-- Side A: input textarea overlay + rendered diff -->
+          <div class="diff-side" id="diff-side-a"
+               ondragover="event.preventDefault(); this.classList.add('drag-active')"
+               ondragleave="this.classList.remove('drag-active')"
+               ondrop="handleDiffDrop(event,'a')">
+            <div class="drop-overlay">Drop file here</div>
+            <div id="diff-render-a"></div>
+          </div>
+
+          <!-- Side B -->
+          <div class="diff-side" id="diff-side-b"
+               ondragover="event.preventDefault(); this.classList.add('drag-active')"
+               ondragleave="this.classList.remove('drag-active')"
+               ondrop="handleDiffDrop(event,'b')">
+            <div class="drop-overlay">Drop file here</div>
+            <div id="diff-render-b"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div class="diff-status-bar">
+        <div class="diff-status-item" id="ds-lines-a">Lines A: —</div>
+        <div class="diff-status-item" id="ds-lines-b">Lines B: —</div>
+        <div class="diff-status-item" id="ds-cursor">Ln 1, Col 1</div>
+        <div style="margin-left:auto" id="ds-result"></div>
+      </div>
+
+      <!-- Hidden file input for compare -->
+      <input type="file" id="file-input-a" style="display:none" onchange="loadFileForSide(event,'a')">
+      <input type="file" id="file-input-b" style="display:none" onchange="loadFileForSide(event,'b')">
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toasts"></div>
+
+<script>
+// ═══════════════════════════════════ STATE ═══════════════
+let currentTab = 'viewer';
+let currentConvert = 'json2xml';
+let currentLang = 'python';
+let currentDiagram = 'tree';
+let globalData = null;
+let globalFormat = 'json';
+let viewerRenderTimer = null;
+const VIEWER_RENDER_DELAY_MS = 140;
+
+function scheduleViewerRender() {
+  clearTimeout(viewerRenderTimer);
+  viewerRenderTimer = setTimeout(() => {
+    renderViewer();
+  }, VIEWER_RENDER_DELAY_MS);
+}
+
+// ═══════════════════════════════════ TABS ═══════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  currentTab = name;
+  if (name === 'viewer') renderViewer();
+  if (name === 'compare') {
+    // Wire side-click tracking
+    setTimeout(() => {
+      const sa = document.getElementById('diff-side-a');
+      const sb = document.getElementById('diff-side-b');
+      if (sa && !sa._tracked) { sa._tracked=true; sa.addEventListener('click', ()=>{ lastClickedSide='a'; sa.focus(); }); sa.setAttribute('tabindex','0'); }
+      if (sb && !sb._tracked) { sb._tracked=true; sb.addEventListener('click', ()=>{ lastClickedSide='b'; sb.focus(); }); sb.setAttribute('tabindex','0'); }
+      renderDiffInputs();
+    }, 0);
+  }
+}
+
+// ═══════════════════════════════════ FILE LOADING ═══════
+function openFilePicker() {
+  document.getElementById('file-input').click();
+}
+
+function loadFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const content = e.target.result;
+    setGlobalContent(content, file.name);
+    toast('📂 Loaded: ' + file.name, 'ok');
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function handleDrop(event, targetId) {
+  event.preventDefault();
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById(targetId).value = e.target.result;
+    if (targetId === 'viewer-input') renderViewer();
+    toast('📂 Dropped: ' + file.name, 'ok');
+  };
+  reader.readAsText(file);
+}
+
+function setGlobalContent(content, filename) {
+  const fmt = filename.toLowerCase().endsWith('.xml') ? 'xml' : 'json';
+  globalFormat = fmt;
+  document.getElementById('viewer-input').value = content;
+  document.getElementById('editor-input').value = content;
+  document.getElementById('convert-input').value = content;
+  document.getElementById('classgen-input').value = content;
+  renderViewer();
+}
+
+// ═══════════════════════════════════ VIEWER ═══════════════
+function renderViewer() {
+  const raw = document.getElementById('viewer-input').value.trim();
+  if (!raw) {
+    document.getElementById('tree-empty').style.display = '';
+    document.getElementById('tree-root').style.display = 'none';
+    resetStats();
+    return;
+  }
+
+  const fmt = detectFormat(raw);
+  globalFormat = fmt;
+  document.getElementById('stat-format').textContent = fmt.toUpperCase();
+
+  if (fmt === 'json') {
+    try {
+      const obj = JSON.parse(raw);
+      globalData = obj;
+      document.getElementById('stat-valid').textContent = '✅ Valid';
+      document.getElementById('stat-valid').className = 'stat-val status-ok';
+      computeStats(obj, raw);
+      renderTree(obj);
+    } catch(e) {
+      document.getElementById('stat-valid').textContent = '❌ Invalid';
+      document.getElementById('stat-valid').className = 'stat-val status-err';
+      document.getElementById('stat-size').textContent = formatBytes(raw.length);
+      document.getElementById('stat-lines').textContent = raw.split('\n').length;
+    }
+  } else if (fmt === 'xml') {
+    try {
+      const obj = xmlToObj(raw);
+      globalData = obj;
+      document.getElementById('stat-valid').textContent = '✅ Valid';
+      document.getElementById('stat-valid').className = 'stat-val status-ok';
+      computeStats(obj, raw);
+      renderTree(obj);
+    } catch(e) {
+      document.getElementById('stat-valid').textContent = '❌ Invalid';
+      document.getElementById('stat-valid').className = 'stat-val status-err';
+    }
+  }
+}
+
+function detectFormat(s) {
+  const t = s.trimStart();
+  if (t.startsWith('<')) return 'xml';
+  if (t.startsWith('{') || t.startsWith('[')) return 'json';
+  return 'json';
+}
+
+function resetStats() {
+  ['keys','objects','arrays','strings','numbers','bools','nulls','size','lines','depth'].forEach(k => {
+    const el = document.getElementById('stat-' + k);
+    if (el) el.textContent = '—';
+  });
+  document.getElementById('stat-valid').textContent = '—';
+  document.getElementById('stat-valid').className = 'stat-val';
+  document.getElementById('stat-format').textContent = '—';
+}
+
+function computeStats(obj, raw) {
+  const counts = { keys: 0, objects: 0, arrays: 0, strings: 0, numbers: 0, bools: 0, nulls: 0, depth: 0 };
+  function walk(o, d) {
+    counts.depth = Math.max(counts.depth, d);
+    if (Array.isArray(o)) {
+      counts.arrays++;
+      o.forEach(item => walk(item, d + 1));
+    } else if (o !== null && typeof o === 'object') {
+      counts.objects++;
+      Object.keys(o).forEach(k => { counts.keys++; walk(o[k], d + 1); });
+    } else if (typeof o === 'string') counts.strings++;
+    else if (typeof o === 'number') counts.numbers++;
+    else if (typeof o === 'boolean') counts.bools++;
+    else if (o === null) counts.nulls++;
+  }
+  walk(obj, 1);
+  document.getElementById('stat-keys').textContent = counts.keys;
+  document.getElementById('stat-objects').textContent = counts.objects;
+  document.getElementById('stat-arrays').textContent = counts.arrays;
+  document.getElementById('stat-strings').textContent = counts.strings;
+  document.getElementById('stat-numbers').textContent = counts.numbers;
+  document.getElementById('stat-bools').textContent = counts.bools;
+  document.getElementById('stat-nulls').textContent = counts.nulls;
+  document.getElementById('stat-size').textContent = formatBytes(raw.length);
+  document.getElementById('stat-lines').textContent = raw.split('\n').length;
+  document.getElementById('stat-depth').textContent = counts.depth;
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+  return (b / 1048576).toFixed(1) + ' MB';
+}
+
+// ═══════════════════════════════════ TREE RENDER ═══════════════
+function renderTree(obj) {
+  const root = document.getElementById('tree-root');
+  const empty = document.getElementById('tree-empty');
+  root.innerHTML = '';
+  root.style.display = '';
+  empty.style.display = 'none';
+  root.appendChild(buildTreeNode(obj, null, 0));
+}
+
+function buildTreeNode(val, key, depth) {
+  const wrap = document.createElement('div');
+  const indent = depth * 14;
+
+  if (val === null || typeof val !== 'object') {
+    const line = document.createElement('div');
+    line.className = 'tree-node';
+    line.style.paddingLeft = (12 + indent) + 'px';
+    let typeClass = 'tree-type-' + (val === null ? 'null' : typeof val);
+    line.innerHTML = `<span class="tree-toggle"></span>${key !== null ? `<span class="tree-key">${escHtml(String(key))}</span><span class="tree-colon">:</span>` : ''}<span class="${typeClass}">${val === null ? 'null' : typeof val === 'string' ? '"' + escHtml(String(val)) + '"' : escHtml(String(val))}</span>`;
+    wrap.appendChild(line);
+    return wrap;
+  }
+
+  const isArr = Array.isArray(val);
+  const keys = Object.keys(val);
+  const header = document.createElement('div');
+  header.className = 'tree-node';
+  header.style.paddingLeft = (12 + indent) + 'px';
+  header.style.cursor = 'pointer';
+  const bracket = isArr ? ['[', ']'] : ['{', '}'];
+  header.innerHTML = `<span class="tree-toggle">▾</span>${key !== null ? `<span class="tree-key">${escHtml(String(key))}</span><span class="tree-colon">:</span>` : ''}<span class="tree-type-object">${bracket[0]}</span> <small style="color:var(--text3);font-size:10px">${keys.length} ${isArr ? 'items' : 'keys'}</small>`;
+
+  const children = document.createElement('div');
+  children.className = 'tree-children';
+
+  keys.forEach(k => {
+    children.appendChild(buildTreeNode(val[k], isArr ? parseInt(k) : k, depth + 1));
+  });
+
+  // Close bracket
+  const closer = document.createElement('div');
+  closer.className = 'tree-node';
+  closer.style.paddingLeft = (12 + indent) + 'px';
+  closer.innerHTML = `<span class="tree-toggle"></span><span class="tree-type-object">${bracket[1]}</span>`;
+  children.appendChild(closer);
+
+  header.addEventListener('click', () => {
+    const collapsed = children.classList.toggle('collapsed');
+    header.querySelector('.tree-toggle').textContent = collapsed ? '▸' : '▾';
+  });
+
+  wrap.appendChild(header);
+  wrap.appendChild(children);
+  return wrap;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ═══════════════════════════════════ EDITOR ═══════════════
+function beautify(inputId, outputId) {
+  const raw = document.getElementById(inputId).value.trim();
+  if (!raw) { toast('Nothing to format', 'err'); return; }
+  const fmt = detectFormat(raw);
+  try {
+    let result;
+    if (fmt === 'json') {
+      result = JSON.stringify(JSON.parse(raw), null, 2);
+    } else {
+      result = beautifyXml(raw);
+    }
+    if (outputId) {
+      document.getElementById(outputId).innerHTML = syntaxHighlight(result, fmt);
+    } else {
+      document.getElementById(inputId).value = result;
+    }
+    document.getElementById('editor-status').innerHTML = '<span class="status-ok">✅ Formatted successfully</span>';
+    toast('✨ Formatted!', 'ok');
+  } catch(e) {
+    document.getElementById('editor-status').innerHTML = `<span class="status-err">❌ ${e.message}</span>`;
+    toast('Parse error: ' + e.message, 'err');
+  }
+}
+
+function minify(inputId, outputId) {
+  const raw = document.getElementById(inputId).value.trim();
+  if (!raw) { toast('Nothing to minify', 'err'); return; }
+  const fmt = detectFormat(raw);
+  try {
+    let result;
+    if (fmt === 'json') {
+      result = JSON.stringify(JSON.parse(raw));
+    } else {
+      result = raw.replace(/\s*\n\s*/g, '').replace(/>\s+</g, '><').trim();
+    }
+    if (outputId) {
+      document.getElementById(outputId).textContent = result;
+    }
+    const saved = ((raw.length - result.length) / raw.length * 100).toFixed(1);
+    toast(`📦 Minified! Saved ${saved}%`, 'ok');
+    document.getElementById('editor-status').innerHTML = `<span class="status-ok">📦 Minified — saved ${saved}% (${formatBytes(raw.length)} → ${formatBytes(result.length)})</span>`;
+  } catch(e) {
+    toast('Parse error: ' + e.message, 'err');
+  }
+}
+
+function validate(inputId) {
+  const raw = document.getElementById(inputId).value.trim();
+  if (!raw) { toast('Nothing to validate', 'err'); return; }
+  const fmt = detectFormat(raw);
+  if (fmt === 'json') {
+    try {
+      JSON.parse(raw);
+      document.getElementById('editor-status').innerHTML = '<span class="status-ok">✅ Valid JSON</span>';
+      toast('✅ Valid JSON!', 'ok');
+    } catch(e) {
+      document.getElementById('editor-status').innerHTML = `<span class="status-err">❌ ${e.message}</span>`;
+      toast('Invalid JSON: ' + e.message, 'err');
+    }
+  } else {
+    try {
+      xmlToObj(raw);
+      document.getElementById('editor-status').innerHTML = '<span class="status-ok">✅ Valid XML</span>';
+      toast('✅ Valid XML!', 'ok');
+    } catch(e) {
+      document.getElementById('editor-status').innerHTML = `<span class="status-err">❌ Invalid XML</span>`;
+      toast('Invalid XML', 'err');
+    }
+  }
+}
+
+function clearEditor() {
+  document.getElementById('editor-input').value = '';
+  document.getElementById('editor-output').innerHTML = '<div class="empty-state" style="height:100%"><div class="big-icon">⚡</div><h3>Formatted output</h3><p>Use Format, Minify, or Validate to see results here.</p></div>';
+  document.getElementById('editor-status').innerHTML = '<span>Cleared</span>';
+}
+
+function beautifyViewer() {
+  const raw = document.getElementById('viewer-input').value.trim();
+  if (!raw) return;
+  const fmt = detectFormat(raw);
+  try {
+    if (fmt === 'json') {
+      document.getElementById('viewer-input').value = JSON.stringify(JSON.parse(raw), null, 2);
+    } else {
+      document.getElementById('viewer-input').value = beautifyXml(raw);
+    }
+    renderViewer();
+    toast('✨ Beautified!', 'ok');
+  } catch(e) {
+    toast('Parse error', 'err');
+  }
+}
+
+function beautifyXml(xml) {
+  let formatted = '';
+  let indent = 0;
+  const pad = () => '  '.repeat(indent);
+  const tokens = xml.match(/<[^>]+>|[^<]+/g) || [];
+  tokens.forEach(token => {
+    token = token.trim();
+    if (!token) return;
+    if (token.match(/^<\/[^>]+>$/)) { indent--; formatted += pad() + token + '\n'; }
+    else if (token.match(/^<[^/][^>]*\/>$/)) { formatted += pad() + token + '\n'; }
+    else if (token.match(/^<[^/!][^>]*>$/) && !token.match(/^<.+>.+<\/.+>$/)) { formatted += pad() + token + '\n'; indent++; }
+    else { formatted += pad() + token + '\n'; }
+  });
+  return formatted.trim();
+}
+
+// ═══════════════════════════════════ SYNTAX HIGHLIGHT ═══
+function syntaxHighlight(code, fmt) {
+  if (fmt === 'json') return highlightJson(code);
+  if (fmt === 'xml') return highlightXml(code);
+  return '<pre>' + escHtml(code) + '</pre>';
+}
+
+function highlightJson(json) {
+  const escaped = json
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) return `<span class="hl-key">${match}</span>`;
+        return `<span class="hl-string">${match}</span>`;
+      }
+      if (/true|false/.test(match)) return `<span class="hl-bool">${match}</span>`;
+      if (/null/.test(match)) return `<span class="hl-null">${match}</span>`;
+      return `<span class="hl-number">${match}</span>`;
+    });
+  return '<pre>' + escaped + '</pre>';
+}
+
+function highlightXml(xml) {
+  const escaped = escHtml(xml)
+    .replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="hl-comment">$1</span>')
+    .replace(/(&lt;\/?)([\w:.-]+)/g, '<span class="hl-tag">$1$2</span>')
+    .replace(/([\w:.-]+)(=)(&quot;[^&]*&quot;)/g, '<span class="hl-attr">$1</span>$2<span class="hl-attrval">$3</span>');
+  return '<pre>' + escaped + '</pre>';
+}
+
+// ═══════════════════════════════════ CONVERT ═══════════════
+function selectConvert(el, conv) {
+  document.querySelectorAll('.convert-option').forEach(o => o.classList.remove('active'));
+  el.classList.add('active');
+  currentConvert = conv;
+}
+
+function runConvert() {
+  const raw = document.getElementById('convert-input').value.trim();
+  if (!raw) { toast('No input provided', 'err'); return; }
+
+  try {
+    let result = '';
+    let fmt = 'text';
+
+    switch(currentConvert) {
+      case 'json2xml': { const obj = JSON.parse(raw); result = jsonToXml(obj, 'root'); fmt = 'xml'; break; }
+      case 'json2csv': { const obj = JSON.parse(raw); result = jsonToCsv(obj); break; }
+      case 'json2yaml': { const obj = JSON.parse(raw); result = jsonToYaml(obj, 0); break; }
+      case 'json2toml': { const obj = JSON.parse(raw); result = jsonToToml(obj); break; }
+      case 'xml2json': { const obj = xmlToObj(raw); result = JSON.stringify(obj, null, 2); fmt = 'json'; break; }
+      case 'json2ts': { const obj = JSON.parse(raw); result = jsonToTypeScript(obj, 'Root'); break; }
+      case 'json2schema': { const obj = JSON.parse(raw); result = JSON.stringify(jsonToSchema(obj), null, 2); fmt = 'json'; break; }
+      case 'json2md': { const obj = JSON.parse(raw); result = jsonToMarkdown(obj, ''); break; }
+    }
+
+    document.getElementById('convert-output-raw').value = result;
+    document.getElementById('convert-output').innerHTML = syntaxHighlight(result, fmt);
+    toast('✅ Converted!', 'ok');
+  } catch(e) {
+    document.getElementById('convert-output').innerHTML = `<div style="color:var(--accent5);padding:16px;font-family:var(--mono)">Error: ${e.message}</div>`;
+    toast('Conversion error: ' + e.message, 'err');
+  }
+}
+
+// JSON → XML
+function jsonToXml(obj, tagName) {
+  if (obj === null) return `<${tagName}/>`;
+  if (typeof obj !== 'object') {
+    return `<${tagName}>${escHtml(String(obj))}</${tagName}>`;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(item => jsonToXml(item, tagName.replace(/s$/, '') || 'item')).join('\n');
+  }
+  const inner = Object.entries(obj).map(([k, v]) => {
+    const key = k.replace(/[^a-zA-Z0-9_:-]/g, '_');
+    return '  ' + jsonToXml(v, key).split('\n').join('\n  ');
+  }).join('\n');
+  return `<${tagName}>\n${inner}\n</${tagName}>`;
+}
+
+// JSON → CSV
+function jsonToCsv(obj) {
+  const arr = Array.isArray(obj) ? obj : [obj];
+  if (!arr.length) return '';
+  const flatObj = o => {
+    const result = {};
+    function recurse(cur, prop) {
+      if (typeof cur !== 'object' || cur === null) { result[prop] = cur; return; }
+      if (Array.isArray(cur)) { result[prop] = cur.join('|'); return; }
+      Object.entries(cur).forEach(([k, v]) => recurse(v, prop ? `${prop}.${k}` : k));
+    }
+    recurse(o, '');
+    return result;
+  };
+  const rows = arr.map(flatObj);
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))];
+  const csv = [cols.map(c => `"${c}"`).join(',')];
+  rows.forEach(row => csv.push(cols.map(c => { const v = row[c]; return v === undefined ? '' : `"${String(v).replace(/"/g,'""')}"`; }).join(',')));
+  return csv.join('\n');
+}
+
+// JSON → YAML
+function jsonToYaml(obj, depth) {
+  const indent = '  '.repeat(depth);
+  if (obj === null) return 'null';
+  if (typeof obj === 'boolean') return obj.toString();
+  if (typeof obj === 'number') return obj.toString();
+  if (typeof obj === 'string') {
+    if (obj.includes('\n') || obj.includes(':') || obj.includes('#')) return `"${obj.replace(/"/g,'\\"')}"`;
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    if (!obj.length) return '[]';
+    return obj.map(item => {
+      const v = jsonToYaml(item, depth + 1);
+      if (typeof item === 'object' && item !== null) return `\n${indent}- ${v.trimStart()}`;
+      return `\n${indent}- ${v}`;
+    }).join('');
+  }
+  if (typeof obj === 'object') {
+    const entries = Object.entries(obj);
+    if (!entries.length) return '{}';
+    return entries.map(([k, v]) => {
+      const val = jsonToYaml(v, depth + 1);
+      if (typeof v === 'object' && v !== null && !Array.isArray(v)) return `\n${indent}${k}:${val}`;
+      if (Array.isArray(v)) return `\n${indent}${k}:${val}`;
+      return `\n${indent}${k}: ${val}`;
+    }).join('');
+  }
+  return String(obj);
+}
+
+// JSON → TOML
+function jsonToToml(obj, prefix) {
+  let result = '';
+  const simple = {};
+  const nested = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    if (typeof v === 'object' && v !== null && !Array.isArray(v)) nested[k] = v;
+    else simple[k] = v;
+  });
+  Object.entries(simple).forEach(([k, v]) => {
+    if (typeof v === 'string') result += `${k} = "${v.replace(/"/g,'\\"')}"\n`;
+    else if (typeof v === 'boolean') result += `${k} = ${v}\n`;
+    else if (typeof v === 'number') result += `${k} = ${v}\n`;
+    else if (Array.isArray(v)) result += `${k} = [${v.map(i => typeof i === 'string' ? `"${i}"` : i).join(', ')}]\n`;
+    else result += `${k} = "${String(v)}"\n`;
+  });
+  Object.entries(nested).forEach(([k, v]) => {
+    const sec = prefix ? `${prefix}.${k}` : k;
+    result += `\n[${sec}]\n` + jsonToToml(v, sec);
+  });
+  return result;
+}
+
+// XML → JSON (simple parser)
+function xmlToObj(xml) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xml, 'application/xml');
+  const err = doc.querySelector('parsererror');
+  if (err) throw new Error('Invalid XML');
+  function nodeToObj(node) {
+    if (node.nodeType === 3) return node.nodeValue.trim() || undefined;
+    if (node.nodeType === 8) return undefined;
+    const obj = {};
+    if (node.attributes && node.attributes.length) {
+      obj['@attributes'] = {};
+      Array.from(node.attributes).forEach(a => obj['@attributes'][a.name] = a.value);
+    }
+    const children = Array.from(node.childNodes).map(nodeToObj).filter(v => v !== undefined);
+    const tags = {};
+    Array.from(node.childNodes).forEach(child => {
+      if (child.nodeType === 1) {
+        const v = nodeToObj(child);
+        if (tags[child.tagName] !== undefined) {
+          if (!Array.isArray(tags[child.tagName])) tags[child.tagName] = [tags[child.tagName]];
+          tags[child.tagName].push(v);
+        } else {
+          tags[child.tagName] = v;
+        }
+      }
+    });
+    if (Object.keys(tags).length) Object.assign(obj, tags);
+    else if (children.length === 1 && typeof children[0] === 'string') {
+      if (!obj['@attributes']) return children[0];
+      obj['#text'] = children[0];
+    }
+    return obj;
+  }
+  return nodeToObj(doc.documentElement);
+}
+
+// JSON → TypeScript interfaces
+function jsonToTypeScript(obj, name) {
+  const interfaces = [];
+  function getType(val, propName) {
+    if (val === null) return 'null';
+    if (Array.isArray(val)) {
+      if (!val.length) return 'any[]';
+      const itemType = getType(val[0], propName + 'Item');
+      return `${itemType}[]`;
+    }
+    if (typeof val === 'object') {
+      const iname = capitalize(propName);
+      generateInterface(val, iname);
+      return iname;
+    }
+    return typeof val;
+  }
+  function generateInterface(obj, iname) {
+    const props = Object.entries(obj).map(([k, v]) => `  ${k}: ${getType(v, k)};`);
+    interfaces.push(`interface ${iname} {\n${props.join('\n')}\n}`);
+  }
+  generateInterface(obj, name);
+  return interfaces.reverse().join('\n\n');
+}
+
+// JSON → JSON Schema
+function jsonToSchema(obj, title) {
+  if (obj === null) return { type: 'null' };
+  if (Array.isArray(obj)) {
+    const schema = { type: 'array' };
+    if (obj.length) schema.items = jsonToSchema(obj[0]);
+    return schema;
+  }
+  if (typeof obj === 'object') {
+    const schema = { type: 'object', properties: {}, required: [] };
+    Object.entries(obj).forEach(([k, v]) => {
+      schema.properties[k] = jsonToSchema(v);
+      schema.required.push(k);
+    });
+    if (title) schema.title = title;
+    schema['$schema'] = 'http://json-schema.org/draft-07/schema#';
+    return schema;
+  }
+  return { type: typeof obj };
+}
+
+// JSON → Markdown
+function jsonToMarkdown(obj, prefix) {
+  let md = '';
+  if (Array.isArray(obj)) {
+    obj.forEach((item, i) => {
+      if (typeof item === 'object' && item !== null) md += jsonToMarkdown(item, prefix);
+      else md += `- ${item}\n`;
+    });
+  } else if (typeof obj === 'object' && obj !== null) {
+    Object.entries(obj).forEach(([k, v]) => {
+      if (typeof v === 'object' && v !== null) {
+        md += `\n### ${capitalize(k)}\n\n`;
+        md += jsonToMarkdown(v, prefix + '  ');
+      } else {
+        md += `**${k}**: ${v}\n\n`;
+      }
+    });
+  }
+  return md;
+}
+
+// ═══════════════════════════════════ CLASS GENERATOR ═══════
+function selectLang(el, lang) {
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentLang = lang;
+}
+
+function generateClasses() {
+  const raw = document.getElementById('classgen-input').value.trim();
+  if (!raw) { toast('No JSON input', 'err'); return; }
+  const rootName = document.getElementById('classname-input').value.trim() || 'Root';
+
+  try {
+    const obj = JSON.parse(raw);
+    const code = generateClassCode(obj, rootName, currentLang);
+    document.getElementById('classgen-output-raw').value = code;
+    document.getElementById('classgen-output').innerHTML = '<pre>' + escHtml(code) + '</pre>';
+    toast('⚡ Classes generated!', 'ok');
+  } catch(e) {
+    toast('Invalid JSON: ' + e.message, 'err');
+  }
+}
+
+function generateClassCode(obj, rootName, lang) {
+  const classes = {};
+  function inferType(val, propName, lang) {
+    if (val === null) return nullType(lang);
+    if (Array.isArray(val)) {
+      if (!val.length) return listType('object', lang);
+      return listType(inferType(val[0], propName + 'Item', lang), lang);
+    }
+    if (typeof val === 'object') {
+      const cn = capitalize(propName);
+      buildClass(val, cn);
+      return cn;
+    }
+    return primitiveType(typeof val, lang);
+  }
+  function primitiveType(t, lang) {
+    const map = {
+      python: { string: 'str', number: 'float', boolean: 'bool' },
+      typescript: { string: 'string', number: 'number', boolean: 'boolean' },
+      java: { string: 'String', number: 'double', boolean: 'boolean' },
+      csharp: { string: 'string', number: 'double', boolean: 'bool' },
+      cpp: { string: 'std::string', number: 'double', boolean: 'bool' },
+      go: { string: 'string', number: 'float64', boolean: 'bool' },
+      rust: { string: 'String', number: 'f64', boolean: 'bool' },
+      kotlin: { string: 'String', number: 'Double', boolean: 'Boolean' },
+      swift: { string: 'String', number: 'Double', boolean: 'Bool' },
+      php: { string: 'string', number: 'float', boolean: 'bool' },
+      ruby: { string: 'String', number: 'Float', boolean: 'TrueClass' },
+    };
+    return (map[lang] || map.python)[t] || 'Any';
+  }
+  function nullType(lang) {
+    const m = { python: 'None', typescript: 'null', java: 'Object', csharp: 'object', cpp: 'nullptr', go: 'interface{}', rust: 'Option<()>', kotlin: 'Any?', swift: 'Any?', php: 'mixed', ruby: 'NilClass' };
+    return m[lang] || 'null';
+  }
+  function listType(inner, lang) {
+    const m = {
+      python: `List[${inner}]`,
+      typescript: `${inner}[]`,
+      java: `List<${capitalize(inner)}>`,
+      csharp: `List<${capitalize(inner)}>`,
+      cpp: `std::vector<${inner}>`,
+      go: `[]${inner}`,
+      rust: `Vec<${inner}>`,
+      kotlin: `List<${capitalize(inner)}>`,
+      swift: `[${inner}]`,
+      php: `array`,
+      ruby: `Array`,
+    };
+    return m[lang] || inner + '[]';
+  }
+  function buildClass(obj, name) {
+    if (classes[name]) return;
+    classes[name] = Object.entries(obj).map(([k, v]) => ({ key: k, type: inferType(v, k, lang) }));
+  }
+  buildClass(obj, rootName);
+
+  // Render
+  const out = [];
+  const classOrder = Object.keys(classes).reverse();
+
+  classOrder.forEach(name => {
+    const props = classes[name];
+    out.push(renderClass(name, props, lang));
+    out.push('');
+  });
+  return out.join('\n');
+}
+
+function renderClass(name, props, lang) {
+  const snake = s => s.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+  const camel = s => s.charAt(0).toLowerCase() + s.slice(1);
+
+  switch(lang) {
+    case 'python':
+      return `from dataclasses import dataclass\nfrom typing import List, Optional\n\n@dataclass\nclass ${name}:\n${props.map(p => `    ${snake(p.key)}: ${p.type}`).join('\n')}`;
+    case 'typescript':
+      return `interface ${name} {\n${props.map(p => `  ${p.key}: ${p.type};`).join('\n')}\n}`;
+    case 'java':
+      return `public class ${name} {\n${props.map(p => `    private ${p.type} ${camel(p.key)};`).join('\n')}\n\n    // Getters and Setters\n${props.map(p => `    public ${p.type} get${capitalize(p.key)}() { return ${camel(p.key)}; }\n    public void set${capitalize(p.key)}(${p.type} ${camel(p.key)}) { this.${camel(p.key)} = ${camel(p.key)}; }`).join('\n')}\n}`;
+    case 'csharp':
+      return `public class ${name}\n{\n${props.map(p => `    public ${p.type} ${capitalize(p.key)} { get; set; }`).join('\n')}\n}`;
+    case 'cpp':
+      return `#include <string>\n#include <vector>\n\nstruct ${name} {\n${props.map(p => `    ${p.type} ${snake(p.key)};`).join('\n')}\n};`;
+    case 'go':
+      return `type ${name} struct {\n${props.map(p => `    ${capitalize(p.key)} ${p.type} \`json:"${p.key}"\``).join('\n')}\n}`;
+    case 'rust':
+      return `use serde::{Deserialize, Serialize};\n\n#[derive(Debug, Serialize, Deserialize)]\npub struct ${name} {\n${props.map(p => `    pub ${snake(p.key)}: ${p.type},`).join('\n')}\n}`;
+    case 'kotlin':
+      return `data class ${name}(\n${props.map(p => `    val ${camel(p.key)}: ${p.type}`).join(',\n')}\n)`;
+    case 'swift':
+      return `struct ${name}: Codable {\n${props.map(p => `    let ${camel(p.key)}: ${p.type}`).join('\n')}\n}`;
+    case 'php':
+      return `<?php\n\nclass ${name}\n{\n${props.map(p => `    private ${p.type} $${camel(p.key)};`).join('\n')}\n\n    public function __construct(${props.map(p => `${p.type} $${camel(p.key)}`).join(', ')}) {\n${props.map(p => `        $this->${camel(p.key)} = $${camel(p.key)};`).join('\n')}\n    }\n}`;
+    case 'ruby':
+      return `class ${name}\n  attr_accessor ${props.map(p => ':' + snake(p.key)).join(', ')}\n\n  def initialize(${props.map(p => snake(p.key)).join(', ')})\n${props.map(p => `    @${snake(p.key)} = ${snake(p.key)}`).join('\n')}\n  end\nend`;
+    default:
+      return '';
+  }
+}
+
+function downloadClassCode() {
+  const code = document.getElementById('classgen-output-raw').value;
+  if (!code) { toast('Generate code first', 'err'); return; }
+  const exts = { python:'py', typescript:'ts', java:'java', csharp:'cs', cpp:'hpp', go:'go', rust:'rs', kotlin:'kt', swift:'swift', php:'php', ruby:'rb' };
+  const ext = exts[currentLang] || 'txt';
+  downloadText(code, `classes.${ext}`);
+  toast('💾 Downloaded!', 'ok');
+}
+
+// ═══════════════════════════════════ DIAGRAM ═══════════════
+function selectDiagram(el, type) {
+  document.querySelectorAll('.diagram-type-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentDiagram = type;
+}
+
+function renderDiagram() {
+  const raw = document.getElementById('diagram-input').value.trim();
+  if (!raw) { toast('No JSON input', 'err'); return; }
+
+  try {
+    const obj = JSON.parse(raw);
+    const canvas = document.getElementById('diagram-canvas');
+    const empty = document.getElementById('diagram-empty');
+    const area = document.getElementById('canvas-area');
+    empty.style.display = 'none';
+    canvas.style.display = 'block';
+
+    switch(currentDiagram) {
+      case 'tree': drawTree(obj, canvas, area); break;
+      case 'schema': drawSchema(obj, canvas, area); break;
+      case 'table': drawTable(obj, canvas, area); break;
+      case 'mindmap': drawMindmap(obj, canvas, area); break;
+    }
+    toast('📊 Diagram rendered!', 'ok');
+  } catch(e) {
+    toast('Invalid JSON: ' + e.message, 'err');
+  }
+}
+
+function setupCanvas(canvas, area, w, h) {
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  return ctx;
+}
+
+function drawTree(obj, canvas, area) {
+  const nodeW = 120, nodeH = 36, hGap = 30, vGap = 60;
+  const nodes = [];
+  const edges = [];
+  let maxX = 0, maxY = 0;
+
+  function calcSubtreeWidth(node) {
+    const children = getChildren(node);
+    if (!children.length) return nodeW;
+    const childWidths = children.map(calcSubtreeWidth);
+    return Math.max(nodeW, childWidths.reduce((a,b) => a + b + hGap, -hGap));
+  }
+
+  function layout(node, x, y, depth) {
+    const children = getChildren(node);
+    const label = getLabel(node);
+    const subtreeW = calcSubtreeWidth(node);
+    const cx = x + subtreeW / 2;
+    nodes.push({ x: cx - nodeW/2, y, w: nodeW, h: nodeH, label, depth });
+    maxX = Math.max(maxX, cx + nodeW/2 + 20);
+    maxY = Math.max(maxY, y + nodeH + 20);
+
+    let childX = x;
+    children.forEach(child => {
+      const childW = calcSubtreeWidth(child);
+      const childCx = childX + childW / 2;
+      edges.push({ x1: cx, y1: y + nodeH, x2: childCx, y2: y + nodeH + vGap });
+      layout(child, childX, y + nodeH + vGap, depth + 1);
+      childX += childW + hGap;
+    });
+  }
+
+  layout(obj, 20, 20, 0);
+  const ctx = setupCanvas(canvas, area, Math.max(600, maxX + 40), Math.max(400, maxY + 40));
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Edges
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1.5;
+  edges.forEach(e => {
+    ctx.beginPath();
+    ctx.moveTo(e.x1, e.y1);
+    const my = (e.y1 + e.y2) / 2;
+    ctx.bezierCurveTo(e.x1, my, e.x2, my, e.x2, e.y2);
+    ctx.stroke();
+  });
+
+  // Nodes
+  const palette = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444'];
+  nodes.forEach(n => {
+    const color = palette[n.depth % palette.length];
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, n.x, n.y, n.w, n.h, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '12px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lbl = n.label.length > 14 ? n.label.slice(0,12) + '..' : n.label;
+    ctx.fillText(lbl, n.x + n.w/2, n.y + n.h/2);
+  });
+}
+
+function drawSchema(obj, canvas, area) {
+  const entries = typeof obj === 'object' && !Array.isArray(obj) ? Object.entries(obj) : [];
+  const cols = Math.min(3, Math.ceil(Math.sqrt(entries.length + 1)));
+  const boxW = 200, boxH = 30, pad = 20, gapX = 40, gapY = 60;
+  const totalW = cols * (boxW + gapX) + pad * 2;
+  const totalH = Math.ceil((entries.length + 1) / cols) * (boxH * 5 + gapY) + pad * 2;
+  const ctx = setupCanvas(canvas, area, Math.max(600, totalW), Math.max(400, totalH));
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let col = 0, row = 0;
+  function drawBox(title, props, x, y) {
+    const h = 32 + props.length * 26 + 12;
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = '#4f8ef7';
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, x, y, boxW, h, 8);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#4f8ef7';
+    roundRect(ctx, x, y, boxW, 30, 8);
+    ctx.fill();
+
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px Syne, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(title.length > 22 ? title.slice(0,20)+'..' : title, x + boxW/2, y + 15);
+
+    props.forEach((p, i) => {
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'transparent';
+      ctx.fillRect(x + 1, y + 30 + i*26, boxW - 2, 26);
+      ctx.fillStyle = '#60a5fa';
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(p.key, x + 10, y + 30 + i*26 + 13);
+      ctx.fillStyle = '#94a3b8';
+      ctx.textAlign = 'right';
+      ctx.fillText(p.type, x + boxW - 10, y + 30 + i*26 + 13);
+    });
+  }
+
+  // Root box
+  const rootProps = entries.map(([k, v]) => ({ key: k, type: getTypeStr(v) }));
+  drawBox('Root', rootProps.slice(0, 8), pad, pad);
+
+  // Nested objects
+  entries.filter(([,v]) => typeof v === 'object' && v !== null && !Array.isArray(v)).slice(0, 8).forEach(([k, v], i) => {
+    col = (i + 1) % cols;
+    row = Math.floor((i + 1) / cols);
+    const x = pad + col * (boxW + gapX);
+    const y = pad + row * 180 + 180;
+    const props = Object.entries(v).map(([kk, vv]) => ({ key: kk, type: getTypeStr(vv) }));
+    drawBox(k, props.slice(0, 5), x, y);
+  });
+}
+
+function drawTable(obj, canvas, area) {
+  const arr = Array.isArray(obj) ? obj : [obj];
+  const flatObj = o => {
+    const result = {};
+    function rec(cur, prop) {
+      if (typeof cur !== 'object' || cur === null) { result[prop] = cur; return; }
+      if (Array.isArray(cur)) { result[prop] = cur.join(', '); return; }
+      Object.entries(cur).forEach(([k, v]) => rec(v, prop ? `${prop}.${k}` : k));
+    }
+    rec(o, '');
+    return result;
+  };
+  const rows = arr.map(flatObj);
+  const cols = [...new Set(rows.flatMap(r => Object.keys(r)))].slice(0, 10);
+  const colW = Math.max(100, Math.min(200, Math.floor(800 / cols.length)));
+  const rowH = 32;
+  const totalW = Math.max(600, colW * cols.length + 40);
+  const totalH = (rows.length + 1) * rowH + 40;
+  const ctx = setupCanvas(canvas, area, totalW, Math.min(totalH, 1200));
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const ox = 20, oy = 20;
+
+  // Header
+  ctx.fillStyle = '#1e40af';
+  ctx.fillRect(ox, oy, colW * cols.length, rowH);
+  cols.forEach((col, i) => {
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = 'bold 11px Syne, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    const txt = col.length > 16 ? col.slice(0,14)+'..' : col;
+    ctx.fillText(txt, ox + i * colW + 10, oy + rowH/2);
+    if (i > 0) {
+      ctx.strokeStyle = '#1e3a8a';
+      ctx.beginPath();
+      ctx.moveTo(ox + i * colW, oy);
+      ctx.lineTo(ox + i * colW, oy + rowH);
+      ctx.stroke();
+    }
+  });
+
+  // Rows
+  rows.slice(0, 30).forEach((row, ri) => {
+    const y = oy + (ri + 1) * rowH;
+    ctx.fillStyle = ri % 2 === 0 ? '#111827' : '#1e293b';
+    ctx.fillRect(ox, y, colW * cols.length, rowH);
+    cols.forEach((col, ci) => {
+      const val = row[col];
+      const txt = val === undefined ? '—' : String(val).length > 18 ? String(val).slice(0,16)+'..' : String(val);
+      ctx.fillStyle = val === undefined ? '#475569' : '#e2e8f0';
+      ctx.font = '11px "JetBrains Mono", monospace';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(txt, ox + ci * colW + 10, y + rowH/2);
+      if (ci > 0) {
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(ox + ci * colW, y);
+        ctx.lineTo(ox + ci * colW, y + rowH);
+        ctx.stroke();
+      }
+    });
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(ox, y + rowH);
+    ctx.lineTo(ox + colW * cols.length, y + rowH);
+    ctx.stroke();
+  });
+
+  // Border
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(ox, oy, colW * cols.length, Math.min(rows.length + 1, 31) * rowH);
+}
+
+function drawMindmap(obj, canvas, area) {
+  const cx = 400, cy = 300, r1 = 130, r2 = 240;
+  const keys = typeof obj === 'object' && !Array.isArray(obj) ? Object.keys(obj) : ['root'];
+  const ctx = setupCanvas(canvas, area, 800, 600);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const palette = ['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ef4444','#06b6d4','#f472b6'];
+
+  // Central node
+  ctx.fillStyle = '#1e293b';
+  ctx.strokeStyle = '#4f8ef7';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy, 45, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 12px Syne, sans-serif';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('Root', cx, cy);
+
+  keys.forEach((key, i) => {
+    const angle = (i / keys.length) * Math.PI * 2 - Math.PI / 2;
+    const nx = cx + Math.cos(angle) * r1;
+    const ny = cy + Math.sin(angle) * r1;
+    const color = palette[i % palette.length];
+
+    // Line to center
+    ctx.strokeStyle = color + '66';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(nx, ny); ctx.stroke();
+
+    // Mid node
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    const nw = Math.max(80, key.length * 8 + 20), nh = 28;
+    roundRect(ctx, nx - nw/2, ny - nh/2, nw, nh, 6);
+    ctx.fill(); ctx.stroke();
+
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = '11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const lbl = key.length > 12 ? key.slice(0,10)+'..' : key;
+    ctx.fillText(lbl, nx, ny);
+
+    // Sub nodes
+    const val = obj[key];
+    let subKeys = [];
+    if (Array.isArray(val)) subKeys = val.slice(0,3).map((_,ii) => `[${ii}]`);
+    else if (typeof val === 'object' && val !== null) subKeys = Object.keys(val).slice(0,4);
+    else subKeys = [String(val).slice(0,12)];
+
+    subKeys.forEach((sk, j) => {
+      const sa = angle + (j - (subKeys.length-1)/2) * 0.4;
+      const sx = cx + Math.cos(sa) * r2;
+      const sy = cy + Math.sin(sa) * r2;
+      ctx.strokeStyle = color + '44';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(nx, ny); ctx.lineTo(sx, sy); ctx.stroke();
+      ctx.fillStyle = '#0f172a';
+      ctx.strokeStyle = color + '88';
+      ctx.lineWidth = 1;
+      const sw = Math.max(60, sk.length * 7 + 20), sh = 24;
+      roundRect(ctx, sx - sw/2, sy - sh/2, sw, sh, 4);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(sk.length > 14 ? sk.slice(0,12)+'..' : sk, sx, sy);
+    });
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function getLabel(node) {
+  if (typeof node === 'string') return node;
+  if (typeof node !== 'object') return String(node);
+  return node.name || node.label || node.id || node.title || Object.keys(node)[0] || 'node';
+}
+
+function getChildren(node) {
+  if (typeof node !== 'object' || node === null) return [];
+  if (Array.isArray(node)) return node;
+  if (node.children) return node.children;
+  if (node.nodes) return node.nodes;
+  return Object.values(node).filter(v => typeof v === 'object' && v !== null);
+}
+
+function getTypeStr(val) {
+  if (val === null) return 'null';
+  if (Array.isArray(val)) return `Array[${val.length}]`;
+  return typeof val;
+}
+
+function downloadDiagram() {
+  const canvas = document.getElementById('diagram-canvas');
+  if (canvas.style.display === 'none') { toast('Render a diagram first', 'err'); return; }
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'diagram.png'; a.click();
+    URL.revokeObjectURL(url);
+    toast('💾 Diagram exported!', 'ok');
+  });
+}
+
+// ═══════════════════════════════════ TEXT COMPARE ENGINE ═══════════════
+let diffSideA = '';
+let diffSideB = '';
+let diffSideLabelA = '— not loaded —';
+let diffSideLabelB = '— not loaded —';
+let diffBlockEls = [];
+let diffNavIndex = -1;
+let lastClickedSide = 'a';
+
+function openFileForSide(side) {
+  document.getElementById('file-input-' + side).click();
+}
+
+function loadFileForSide(event, side) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    if (side === 'a') { diffSideA = e.target.result; diffSideLabelA = file.name; }
+    else              { diffSideB = e.target.result; diffSideLabelB = file.name; }
+    document.getElementById('label-' + side).textContent = file.name;
+    renderDiffInputs();
+    toast('📂 Loaded ' + file.name, 'ok');
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function handleDiffDrop(event, side) {
+  event.preventDefault();
+  const el = document.getElementById('diff-side-' + side);
+  el.classList.remove('drag-active');
+  const file = event.dataTransfer.files[0];
+  if (!file) { return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    if (side === 'a') { diffSideA = e.target.result; diffSideLabelA = file.name; }
+    else              { diffSideB = e.target.result; diffSideLabelB = file.name; }
+    document.getElementById('label-' + side).textContent = file.name;
+    renderDiffInputs();
+    toast('📂 Dropped ' + file.name, 'ok');
+  };
+  reader.readAsText(file);
+}
+
+function clearSide(side) {
+  if (side === 'a') { diffSideA = ''; diffSideLabelA = '— not loaded —'; }
+  else              { diffSideB = ''; diffSideLabelB = '— not loaded —'; }
+  document.getElementById('label-' + side).textContent = side === 'a' ? diffSideLabelA : diffSideLabelB;
+  renderDiffInputs();
+}
+
+function clearCompare() {
+  diffSideA = ''; diffSideB = '';
+  diffSideLabelA = '— not loaded —'; diffSideLabelB = '— not loaded —';
+  document.getElementById('label-a').textContent = diffSideLabelA;
+  document.getElementById('label-b').textContent = diffSideLabelB;
+  renderDiffInputs();
+  document.getElementById('diff-pills').style.display = 'none';
+  document.getElementById('ds-result').textContent = '';
+  document.getElementById('diff-nav-label').textContent = '';
+  document.getElementById('btn-prev-diff').disabled = true;
+  document.getElementById('btn-next-diff').disabled = true;
+  diffBlockEls = []; diffNavIndex = -1;
+}
+
+function swapSides() {
+  [diffSideA, diffSideB] = [diffSideB, diffSideA];
+  [diffSideLabelA, diffSideLabelB] = [diffSideLabelB, diffSideLabelA];
+  document.getElementById('label-a').textContent = diffSideLabelA;
+  document.getElementById('label-b').textContent = diffSideLabelB;
+  renderDiffInputs();
+  if (diffSideA && diffSideB) runTextCompare();
+}
+
+function renderDiffInputs() {
+  const rA = document.getElementById('diff-render-a');
+  const rB = document.getElementById('diff-render-b');
+  function emptyMsg(txt) {
+    return `<div style="display:flex;align-items:center;justify-content:center;height:220px;color:var(--text3);font-family:var(--sans);font-size:13px;font-weight:600;flex-direction:column;gap:10px"><div style="font-size:32px">📄</div><div>${txt}</div></div>`;
+  }
+  function plainRows(content) {
+    return content.split('\n').map((line, i) =>
+      `<div class="diff-row row-same"><span class="diff-gutter">${i+1}</span><span class="diff-row-content">${escHtml(line) || '&nbsp;'}</span></div>`
+    ).join('');
+  }
+  rA.innerHTML = diffSideA ? plainRows(diffSideA) : emptyMsg('Drop a file · Load · or click here &amp; Ctrl+V');
+  rB.innerHTML = diffSideB ? plainRows(diffSideB) : emptyMsg('Drop a file · Load · or click here &amp; Ctrl+V');
+  updateStatusBar();
+}
+
+function updateStatusBar() {
+  const lA = diffSideA ? diffSideA.split('\n').length : 0;
+  const lB = diffSideB ? diffSideB.split('\n').length : 0;
+  document.getElementById('ds-lines-a').textContent = `Lines A: ${lA || '—'}`;
+  document.getElementById('ds-lines-b').textContent = `Lines B: ${lB || '—'}`;
+}
+
+/* ── LCS diff ── */
+function lcsTable(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, () => new Int32Array(n+1));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]+1 : Math.max(dp[i-1][j], dp[i][j-1]);
+  return dp;
+}
+
+function backtrack(dp, a, b, i, j) {
+  if (i === 0 && j === 0) return [];
+  if (i === 0) return [...backtrack(dp, a, b, i, j-1), {type:'added', lineA:null, lineB:b[j-1]}];
+  if (j === 0) return [...backtrack(dp, a, b, i-1, j), {type:'removed', lineA:a[i-1], lineB:null}];
+  if (a[i-1] === b[j-1]) return [...backtrack(dp, a, b, i-1, j-1), {type:'same', lineA:a[i-1], lineB:b[j-1]}];
+  if (dp[i-1][j] >= dp[i][j-1]) return [...backtrack(dp, a, b, i-1, j), {type:'removed', lineA:a[i-1], lineB:null}];
+  return [...backtrack(dp, a, b, i, j-1), {type:'added', lineA:null, lineB:b[j-1]}];
+}
+
+function mergeChanges(ops) {
+  const out = [];
+  let i = 0;
+  while (i < ops.length) {
+    if (ops[i].type === 'removed' && i+1 < ops.length && ops[i+1].type === 'added') {
+      out.push({type:'changed', lineA:ops[i].lineA, lineB:ops[i+1].lineB});
+      i += 2;
+    } else { out.push(ops[i]); i++; }
+  }
+  return out;
+}
+
+function charDiff(strA, strB) {
+  const cap = 120;
+  const a = strA.slice(0, cap).split(''), b = strB.slice(0, cap).split('');
+  const dp = lcsTable(a, b);
+  const ops = backtrack(dp, a, b, a.length, b.length);
+  let outA = '', outB = '';
+  ops.forEach(op => {
+    if (op.type === 'same')    { outA += escHtml(op.lineA); outB += escHtml(op.lineB); }
+    else if (op.type === 'removed') outA += `<span class="hl-rem-char">${escHtml(op.lineA)}</span>`;
+    else if (op.type === 'added')   outB += `<span class="hl-add-char">${escHtml(op.lineB)}</span>`;
+    else { outA += `<span class="hl-rem-char">${escHtml(op.lineA)}</span>`; outB += `<span class="hl-add-char">${escHtml(op.lineB)}</span>`; }
+  });
+  if (strA.length > cap) outA += escHtml(strA.slice(cap));
+  if (strB.length > cap) outB += escHtml(strB.slice(cap));
+  return { outA, outB };
+}
+
+function runTextCompare() {
+  // try to collect typed content if nothing loaded
+  if (!diffSideA) {
+    const rows = document.getElementById('diff-render-a').querySelectorAll('.diff-row-content');
+    if (rows.length) diffSideA = Array.from(rows).map(r => r.innerText).join('\n').trimEnd();
+  }
+  if (!diffSideB) {
+    const rows = document.getElementById('diff-render-b').querySelectorAll('.diff-row-content');
+    if (rows.length) diffSideB = Array.from(rows).map(r => r.innerText).join('\n').trimEnd();
+  }
+  if (!diffSideA || !diffSideB) { toast('Load or paste content into both sides first', 'err'); return; }
+
+  const ignoreWS   = document.getElementById('chk-whitespace').checked;
+  const ignoreCase = document.getElementById('chk-case').checked;
+  const inlineChr  = document.getElementById('chk-inline').checked;
+
+  function norm(s) {
+    let r = s;
+    if (ignoreWS)   r = r.replace(/\s+/g,' ').trim();
+    if (ignoreCase) r = r.toLowerCase();
+    return r;
+  }
+
+  const rawA = diffSideA.split('\n');
+  const rawB = diffSideB.split('\n');
+  // Cap for performance (LCS is O(m*n))
+  const capA = rawA.slice(0, 3000).map(norm);
+  const capB = rawB.slice(0, 3000).map(norm);
+
+  const dp  = lcsTable(capA, capB);
+  let ops   = backtrack(dp, capA, capB, capA.length, capB.length);
+  ops       = mergeChanges(ops);
+
+  // Restore original lines
+  let ia = 0, ib = 0;
+  ops = ops.map(op => {
+    if (op.type === 'same')    return {type:'same',    lineA:rawA[ia++], lineB:rawB[ib++]};
+    if (op.type === 'removed') return {type:'removed', lineA:rawA[ia++], lineB:null};
+    if (op.type === 'added')   return {type:'added',   lineA:null,       lineB:rawB[ib++]};
+    if (op.type === 'changed') return {type:'changed', lineA:rawA[ia++], lineB:rawB[ib++]};
+    return op;
+  });
+
+  // Append any overflow lines as added/removed
+  while (ia < rawA.length) { ops.push({type:'removed', lineA:rawA[ia++], lineB:null}); }
+  while (ib < rawB.length) { ops.push({type:'added',   lineA:null,       lineB:rawB[ib++]}); }
+
+  let nAdd=0, nRem=0, nChg=0, nSame=0;
+  ops.forEach(o => { if(o.type==='added') nAdd++; else if(o.type==='removed') nRem++; else if(o.type==='changed') nChg++; else nSame++; });
+
+  document.getElementById('diff-pills').style.display = 'flex';
+  document.getElementById('pill-add').textContent  = '+' + nAdd;
+  document.getElementById('pill-rem').textContent  = '−' + nRem;
+  document.getElementById('pill-chg').textContent  = '~' + nChg;
+  document.getElementById('pill-same').textContent = '= ' + nSame + ' same';
+
+  const rA = document.getElementById('diff-render-a');
+  const rB = document.getElementById('diff-render-b');
+  let htmlA = '', htmlB = '';
+  let lnA = 1, lnB = 1;
+  diffBlockEls = [];
+
+  ops.forEach((op, idx) => {
+    const cls   = {same:'row-same', added:'row-added', removed:'row-removed', changed:'row-changed'}[op.type];
+    const idA   = `dr-a-${idx}`, idB = `dr-b-${idx}`;
+    let cA = '', cB = '';
+
+    if (op.type === 'changed' && inlineChr) {
+      const cd = charDiff(op.lineA||'', op.lineB||'');
+      cA = cd.outA; cB = cd.outB;
+    } else {
+      cA = escHtml(op.lineA||'');
+      cB = escHtml(op.lineB||'');
+    }
+
+    if (op.lineA !== null) {
+      htmlA += `<div class="diff-row ${cls}" id="${idA}"><span class="diff-gutter">${lnA++}</span><span class="diff-row-content">${cA||'&nbsp;'}</span></div>`;
+    } else {
+      htmlA += `<div class="diff-row row-gap" id="${idA}"><span class="diff-gutter"></span><span class="diff-row-content" style="color:#1e293b">▓</span></div>`;
+    }
+
+    if (op.lineB !== null) {
+      htmlB += `<div class="diff-row ${cls}" id="${idB}"><span class="diff-gutter">${lnB++}</span><span class="diff-row-content">${cB||'&nbsp;'}</span></div>`;
+    } else {
+      htmlB += `<div class="diff-row row-gap" id="${idB}"><span class="diff-gutter"></span><span class="diff-row-content" style="color:#1e293b">▓</span></div>`;
+    }
+
+    if (op.type !== 'same') diffBlockEls.push({idA, idB, type:op.type});
+  });
+
+  rA.innerHTML = htmlA;
+  rB.innerHTML = htmlB;
+
+  // Sync scroll both ways
+  const sA = document.getElementById('diff-side-a');
+  const sB = document.getElementById('diff-side-b');
+  let syncLock = false;
+  sA.onscroll = () => { if (!syncLock) { syncLock=true; sB.scrollTop=sA.scrollTop; syncLock=false; } };
+  sB.onscroll = () => { if (!syncLock) { syncLock=true; sA.scrollTop=sB.scrollTop; syncLock=false; } };
+
+  // Nav
+  diffNavIndex = -1;
+  const hasDiffs = diffBlockEls.length > 0;
+  document.getElementById('btn-prev-diff').disabled = !hasDiffs;
+  document.getElementById('btn-next-diff').disabled = !hasDiffs;
+
+  if (hasDiffs) {
+    document.getElementById('diff-nav-label').textContent = `${diffBlockEls.length} difference${diffBlockEls.length>1?'s':''}`;
+    diffNav(1);
+  } else {
+    document.getElementById('diff-nav-label').textContent = 'Files are identical ✅';
+  }
+
+  const total = nAdd + nRem + nChg;
+  document.getElementById('ds-lines-a').textContent = `Lines A: ${rawA.length}`;
+  document.getElementById('ds-lines-b').textContent = `Lines B: ${rawB.length}`;
+  document.getElementById('ds-result').innerHTML = total === 0
+    ? '<span style="color:var(--accent3)">✅ Identical</span>'
+    : `<span style="color:var(--accent4)">⚠ ${total} difference${total>1?'s':''}</span>`;
+
+  toast(`⚖️ ${total} difference${total !== 1 ? 's' : ''} found`, total === 0 ? 'ok' : 'info');
+}
+
+function diffNav(dir) {
+  if (!diffBlockEls.length) return;
+  diffNavIndex = (diffNavIndex + dir + diffBlockEls.length) % diffBlockEls.length;
+  const block = diffBlockEls[diffNavIndex];
+  document.querySelectorAll('.diff-row.nav-focus').forEach(r => r.classList.remove('nav-focus'));
+  const elA = document.getElementById(block.idA);
+  const elB = document.getElementById(block.idB);
+  if (elA) { elA.classList.add('nav-focus'); elA.scrollIntoView({behavior:'smooth', block:'center'}); }
+  if (elB)   elB.classList.add('nav-focus');
+  document.getElementById('diff-nav-label').textContent = `${diffNavIndex+1} / ${diffBlockEls.length}`;
+}
+
+function exportDiffReport() {
+  if (!diffBlockEls.length && !diffSideA) { toast('Run a compare first', 'err'); return; }
+  let report = `TEXT DIFF REPORT\nGenerated: ${new Date().toLocaleString()}\nFile A: ${diffSideLabelA}\nFile B: ${diffSideLabelB}\n${'─'.repeat(60)}\n\n`;
+  const rowsA = document.getElementById('diff-render-a').querySelectorAll('.diff-row');
+  const rowsB = document.getElementById('diff-render-b').querySelectorAll('.diff-row');
+  rowsA.forEach((row, i) => {
+    const type = [...row.classList].find(c => ['row-added','row-removed','row-changed'].includes(c));
+    if (!type) return;
+    const ln = row.querySelector('.diff-gutter')?.textContent || '?';
+    const txt = row.querySelector('.diff-row-content')?.innerText || '';
+    const sign = {'row-added':'+','row-removed':'−','row-changed':'~'}[type] || '?';
+    report += `[A:${ln}] ${sign} ${txt}\n`;
+    if (rowsB[i]) {
+      const lnB = rowsB[i].querySelector('.diff-gutter')?.textContent || '?';
+      const txtB = rowsB[i].querySelector('.diff-row-content')?.innerText || '';
+      if (txtB !== txt) report += `[B:${lnB}] ${sign} ${txtB}\n`;
+    }
+    report += '\n';
+  });
+  downloadText(report, 'diff-report.txt');
+  toast('📄 Report exported!', 'ok');
+}
+
+// Paste interception for compare panel
+document.addEventListener('paste', e => {
+  if (currentTab !== 'compare') return;
+  const txt = (e.clipboardData || window.clipboardData).getData('text');
+  if (!txt) return;
+  e.preventDefault();
+  if (lastClickedSide === 'a') {
+    diffSideA = txt; document.getElementById('label-a').textContent = 'pasted'; renderDiffInputs(); toast('📋 Pasted to Side A', 'info');
+  } else {
+    diffSideB = txt; document.getElementById('label-b').textContent = 'pasted'; renderDiffInputs(); toast('📋 Pasted to Side B', 'info');
+  }
+}, true);
+
+// nav-focus style
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `.diff-row.nav-focus { outline: 2px solid var(--accent4) !important; outline-offset: -2px; z-index:2; position:relative; }`;
+  document.head.appendChild(s);
+})();
+
+// stubs kept for backward compat
+function runCompare() { runTextCompare(); }
+function deepDiff() { return []; }
+
+// ═══════════════════════════════════ UTILITIES ═══════════════
+function copyOutput(id) {
+  const el = document.getElementById(id);
+  const text = el.value !== undefined ? el.value : el.innerText;
+  if (!text.trim()) { toast('Nothing to copy', 'err'); return; }
+  navigator.clipboard.writeText(text).then(() => toast('📋 Copied!', 'ok')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast('📋 Copied!', 'ok');
+  });
+}
+
+function downloadOutput() {
+  const tab = currentTab;
+  let content = '', filename = 'output.json';
+  if (tab === 'viewer') { content = document.getElementById('viewer-input').value; filename = 'data.' + globalFormat; }
+  else if (tab === 'editor') { content = document.getElementById('editor-input').value; filename = 'data.json'; }
+  else if (tab === 'convert') { content = document.getElementById('convert-output-raw').value; filename = 'converted.txt'; }
+  else if (tab === 'classgen') { content = document.getElementById('classgen-output-raw').value; }
+  else if (tab === 'compare') { exportDiffReport(); return; }
+  if (!content) { toast('Nothing to export', 'err'); return; }
+  downloadText(content, filename);
+  toast('💾 Exported!', 'ok');
+}
+
+function downloadText(text, filename) {
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function capitalize(s) {
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+}
+
+function toast(msg, type = 'info') {
+  const container = document.getElementById('toasts');
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateX(30px)'; el.style.transition = 'all 0.3s'; setTimeout(() => el.remove(), 300); }, 2800);
+}
+
+// Load sample on start
+window.addEventListener('DOMContentLoaded', () => {
+  const sample = `{
+  "project": "JSON·XML Studio",
+  "version": "1.0.0",
+  "features": [
+    "viewer",
+    "editor",
+    "convert",
+    "classgen",
+    "diagram",
+    "compare"
+  ],
+  "author": {
+    "name": "Developer",
+    "email": "dev@example.com",
+    "active": true
+  },
+  "stats": {
+    "stars": 1024,
+    "forks": 256
+  }
+}`;
+  document.getElementById('viewer-input').value = sample;
+  document.getElementById('editor-input').value = sample;
+  document.getElementById('classgen-input').value = sample;
+  document.getElementById('diagram-input').value = sample;
+  requestAnimationFrame(() => renderViewer());
+});
+</script>
+</body>
+</html>
