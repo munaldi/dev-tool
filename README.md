@@ -1,5 +1,7 @@
 # Dev Tool
 
+[![Security Checks](https://github.com/munaldi/dev-tool/actions/workflows/security.yml/badge.svg)](https://github.com/munaldi/dev-tool/actions/workflows/security.yml)
+
 Aplicacao web para visualizar, validar e converter JSON/XML, publicada via Firebase Hosting.
 
 ## Requisitos
